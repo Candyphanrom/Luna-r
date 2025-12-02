@@ -1,0 +1,26 @@
+import { prisma } from '@/lib/prisma'
+import { notFound } from 'next/navigation'
+import EditProductForm from './EditProductForm'
+
+export default async function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  const product = await prisma.product.findUnique({
+    where: { id },
+    include: { variants: true }
+  })
+
+  if (!product) {
+    notFound()
+  }
+
+  const serializedProduct = {
+    ...product,
+    variants: product.variants.map(v => ({
+      ...v,
+      price: v.price.toString(),
+      dimensions: v.dimensions
+    }))
+  }
+
+  return <EditProductForm product={serializedProduct} />
+}

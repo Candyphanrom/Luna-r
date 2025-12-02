@@ -1,0 +1,70 @@
+@import "tailwindcss";
+
+:root {
+  /* Material Design Dark Theme inspired palette */
+  --background: #121212;
+  /* Material Dark Background */
+  --foreground: #E0E0E0;
+  /* High emphasis text */
+  --card-bg: #1E1E1E;
+  /* Material Surface */
+  --primary: #BB86FC;
+  /* Material Dark Primary */
+  --primary-variant: #3700B3;
+  --secondary: #03DAC6;
+  /* Material Dark Secondary */
+  --error: #CF6679;
+
+  /* Elevation Shadows */
+  --shadow-1: 0 1px 1px 0 rgba(0, 0, 0, 0.14), 0 2px 1px -1px rgba(0, 0, 0, 0.12), 0 1px 3px 0 rgba(0, 0, 0, 0.20);
+  --shadow-2: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 3px 1px -2px rgba(0, 0, 0, 0.12), 0 1px 5px 0 rgba(0, 0, 0, 0.20);
+  --shadow-3: 0 3px 4px 0 rgba(0, 0, 0, 0.14), 0 3px 3px -2px rgba(0, 0, 0, 0.12), 0 1px 8px 0 rgba(0, 0, 0, 0.20);
+  --shadow-4: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.20);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card-bg);
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-error: var(--error);
+  --font-sans: var(--font-inter);
+
+  --shadow-elevation-1: var(--shadow-1);
+  --shadow-elevation-2: var(--shadow-2);
+  --shadow-elevation-3: var(--shadow-3);
+  --shadow-elevation-4: var(--shadow-4);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  overflow-x: hidden;
+}
+
+/* Material Utilities */
+.material-card {
+  background-color: var(--card-bg);
+  border-radius: 8px;
+  box-shadow: var(--shadow-1);
+  transition: box-shadow 0.3s ease-in-out;
+}
+
+.material-card:hover {
+  box-shadow: var(--shadow-3);
+}
+
+.material-btn {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+/* Glow Effects (kept as requested but refined) */
+.glow-text {
+  text-shadow: 0 0 10px rgba(187, 134, 252, 0.5);
+}
