@@ -34,6 +34,10 @@ model Product {
   images      String[]
   videoUrl    String?
   modelUrl    String?
+  seoTitle       String?
+  seoDescription String?
+  specs          Json?    // Key-value pairs for technical specifications
+  faq            Json?    // Array of {question, answer} objects
   variants    ProductVariant[]
   cartItems   CartItem[]
   orderItems  OrderItem[]

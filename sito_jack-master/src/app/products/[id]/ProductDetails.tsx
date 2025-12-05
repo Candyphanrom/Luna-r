@@ -1,8 +1,9 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ShoppingCart, Box, Play, FileBox, X } from 'lucide-react'
+import { ShoppingCart, Box, Play, FileBox, X, ArrowLeft, Home } from 'lucide-react'
 import { Product, ProductVariant } from '@prisma/client'
 
 type SerializedVariant = Omit<ProductVariant, 'price'> & {
@@ -12,19 +13,44 @@ type SerializedVariant = Omit<ProductVariant, 'price'> & {
 
 type SerializedProduct = Omit<Product, 'variants'> & {
   variants: SerializedVariant[]
+  specs?: Record<string, string> | null
+  faq?: Array<{ question: string; answer: string }> | null
 }
 
 import ModelViewer from '@/components/ModelViewer'
 
 export default function ProductDetails({ product }: { product: SerializedProduct }) {
+  const router = useRouter()
   const [selectedVariant, setSelectedVariant] = useState<SerializedVariant | null>(
     product.variants[0] || null
   )
   const [activeImage, setActiveImage] = useState(product.images[0] || '')
   const [isModelOpen, setIsModelOpen] = useState(false)
+  const [activeTab, setActiveTab] = useState<'specs' | 'faq'>('specs')
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black text-white">
+      {/* Navigation Bar */}
+      <div className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-8">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => router.back()}
+            className="flex items-center text-gray-400 hover:text-white transition-colors"
+          >
+            <ArrowLeft className="mr-2 h-5 w-5" />
+            Back
+          </button>
+          <div className="h-4 w-px bg-gray-700"></div>
+          <button
+            onClick={() => router.push('/')}
+            className="flex items-center text-gray-400 hover:text-white transition-colors"
+          >
+            <Home className="mr-2 h-5 w-5" />
+            Home
+          </button>
+        </div>
+      </div>
+
       {/* Model Viewer Modal */}
       <AnimatePresence>
         {isModelOpen && (
@@ -49,7 +75,7 @@ export default function ProductDetails({ product }: { product: SerializedProduct
         )}
       </AnimatePresence>
 
-      <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-2">
           {/* Image Gallery Section */}
           <motion.div
@@ -82,9 +108,8 @@ export default function ProductDetails({ product }: { product: SerializedProduct
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setActiveImage(img)}
-                  className={`relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg border-2 ${
-                    activeImage === img ? 'border-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.5)]' : 'border-transparent'
-                  }`}
+                  className={`relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg border-2 ${activeImage === img ? 'border-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.5)]' : 'border-transparent'
+                    }`}
                 >
                   <img src={img} alt="" className="h-full w-full object-cover" />
                 </motion.button>
@@ -126,11 +151,10 @@ export default function ProductDetails({ product }: { product: SerializedProduct
                     whileHover={{ scale: 1.02, backgroundColor: 'rgba(99, 102, 241, 0.1)' }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => setSelectedVariant(variant)}
-                    className={`relative flex flex-col items-center justify-between rounded-xl border-2 p-4 transition-colors ${
-                      selectedVariant?.id === variant.id
-                        ? 'border-indigo-500 bg-indigo-500/10 shadow-[0_0_20px_rgba(99,102,241,0.3)]'
-                        : 'border-gray-700 bg-gray-800/50 hover:border-gray-600'
-                    }`}
+                    className={`relative flex flex-col items-center justify-between rounded-xl border-2 p-4 transition-colors ${selectedVariant?.id === variant.id
+                      ? 'border-indigo-500 bg-indigo-500/10 shadow-[0_0_20px_rgba(99,102,241,0.3)]'
+                      : 'border-gray-700 bg-gray-800/50 hover:border-gray-600'
+                      }`}
                   >
                     <span className="text-lg font-bold text-white">{variant.name}</span>
                     <span className="text-xs text-gray-400">{variant.dimensions}</span>
@@ -152,7 +176,7 @@ export default function ProductDetails({ product }: { product: SerializedProduct
                 <ShoppingCart className="mr-2 h-6 w-6" />
                 Add to Cart
               </motion.button>
-              
+
               {product.modelUrl && (
                 <motion.button
                   whileHover={{ scale: 1.02, backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
@@ -182,6 +206,60 @@ export default function ProductDetails({ product }: { product: SerializedProduct
               )}
             </div>
           </motion.div>
+        </div>
+
+        {/* Specs & FAQ Section */}
+        <div className="mt-24">
+          <div className="flex gap-8 border-b border-gray-800 pb-4">
+            <button
+              onClick={() => setActiveTab('specs')}
+              className={`text-xl font-bold transition-colors ${activeTab === 'specs' ? 'text-indigo-400' : 'text-gray-500 hover:text-white'}`}
+            >
+              Technical Specifications
+            </button>
+            <button
+              onClick={() => setActiveTab('faq')}
+              className={`text-xl font-bold transition-colors ${activeTab === 'faq' ? 'text-indigo-400' : 'text-gray-500 hover:text-white'}`}
+            >
+              FAQ
+            </button>
+          </div>
+
+          <div className="mt-8">
+            {activeTab === 'specs' && product.specs && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="overflow-hidden rounded-xl border border-gray-800 bg-gray-900/50"
+              >
+                <table className="w-full text-left">
+                  <tbody className="divide-y divide-gray-800">
+                    {Object.entries(product.specs as Record<string, string>).map(([key, value]) => (
+                      <tr key={key} className="hover:bg-gray-800/50">
+                        <td className="p-4 font-medium text-gray-400 w-1/3">{key}</td>
+                        <td className="p-4 text-white">{value}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </motion.div>
+            )}
+
+            {activeTab === 'faq' && product.faq && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="space-y-4"
+              >
+                {(product.faq as Array<{ question: string; answer: string }>).map((item, i) => (
+                  <div key={i} className="rounded-xl border border-gray-800 bg-gray-900/50 p-6">
+                    <h3 className="text-lg font-bold text-white mb-2">{item.question}</h3>
+                    <p className="text-gray-400">{item.answer}</p>
+                  </div>
+                ))}
+              </motion.div>
+            )}
+          </div>
         </div>
       </div>
     </div>

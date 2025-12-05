@@ -1,25 +1,68 @@
 @import "tailwindcss";
 
 :root {
-  /* Material Design Dark Theme inspired palette */
-  --background: #121212;
-  /* Material Dark Background */
+  /* Gradient Color Scheme - Based on user palette */
+  /* Gradient 2: Blue → Teal */
+  --gradient-2-start: #2196F3;
+  --gradient-2-mid: #00BCD4;
+  --gradient-2-end: #00ACC1;
+
+  /* Gradient 3: Cyan → Purple (Cool) */
+  --gradient-3-start: #4DD0E1;
+  --gradient-3-mid: #7E57C2;
+  --gradient-3-end: #1A0033;
+
+  /* Gradient 7: Purple → Cyan (Cool Dark) */
+  --gradient-7-start: #1A0033;
+  --gradient-7-mid: #5E35B1;
+  --gradient-7-end: #00BCD4;
+
+  /* Gradient 8: Magenta → Yellow (Warm) */
+  --gradient-8-start: #FF1744;
+  --gradient-8-mid: #C51162;
+  --gradient-8-end: #FFD600;
+
+  /* Gradient 10: Green → Lime */
+  --gradient-10-start: #4CAF50;
+  --gradient-10-mid: #8BC34A;
+  --gradient-10-end: #CDDC39;
+
+  /* Gradient 12: Orange → Red */
+  --gradient-12-start: #FF9800;
+  --gradient-12-mid: #FF5722;
+  --gradient-12-end: #F44336;
+
+  /* Gradient 14: Indigo → Blue */
+  --gradient-14-start: #3F51B5;
+  --gradient-14-mid: #2196F3;
+  --gradient-14-end: #03A9F4;
+
+  /* Gradient 15: Pink → Purple */
+  --gradient-15-start: #E91E63;
+  --gradient-15-mid: #9C27B0;
+  --gradient-15-end: #673AB7;
+
+  /* Gradient 16: Magenta → Yellow Highlight */
+  --gradient-16-start: #E91E63;
+  --gradient-16-mid: #9C27B0;
+  --gradient-16-end: #CDDC39;
+
+  /* Base colors from gradients */
+  --background: #0A0014;
   --foreground: #E0E0E0;
-  /* High emphasis text */
-  --card-bg: #1E1E1E;
-  /* Material Surface */
-  --primary: #BB86FC;
-  /* Material Dark Primary */
-  --primary-variant: #3700B3;
-  --secondary: #03DAC6;
-  /* Material Dark Secondary */
+  --card-bg: rgba(30, 0, 51, 0.6);
+  --primary: #7E57C2;
+  --primary-variant: #5E35B1;
+  --secondary: #4DD0E1;
+  --accent: #FF1744;
+  --highlight: #E91E63;
   --error: #CF6679;
 
-  /* Elevation Shadows */
-  --shadow-1: 0 1px 1px 0 rgba(0, 0, 0, 0.14), 0 2px 1px -1px rgba(0, 0, 0, 0.12), 0 1px 3px 0 rgba(0, 0, 0, 0.20);
-  --shadow-2: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 3px 1px -2px rgba(0, 0, 0, 0.12), 0 1px 5px 0 rgba(0, 0, 0, 0.20);
-  --shadow-3: 0 3px 4px 0 rgba(0, 0, 0, 0.14), 0 3px 3px -2px rgba(0, 0, 0, 0.12), 0 1px 8px 0 rgba(0, 0, 0, 0.20);
-  --shadow-4: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.20);
+  /* Elevation Shadows with gradient tint */
+  --shadow-1: 0 1px 1px 0 rgba(126, 87, 194, 0.14), 0 2px 1px -1px rgba(77, 208, 225, 0.12), 0 1px 3px 0 rgba(0, 0, 0, 0.20);
+  --shadow-2: 0 2px 2px 0 rgba(126, 87, 194, 0.14), 0 3px 1px -2px rgba(77, 208, 225, 0.12), 0 1px 5px 0 rgba(0, 0, 0, 0.20);
+  --shadow-3: 0 3px 4px 0 rgba(126, 87, 194, 0.14), 0 3px 3px -2px rgba(77, 208, 225, 0.12), 0 1px 8px 0 rgba(0, 0, 0, 0.20);
+  --shadow-4: 0 4px 5px 0 rgba(126, 87, 194, 0.14), 0 1px 10px 0 rgba(77, 208, 225, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.20);
 }
 
 @theme inline {
@@ -28,6 +71,8 @@
   --color-card: var(--card-bg);
   --color-primary: var(--primary);
   --color-secondary: var(--secondary);
+  --color-accent: var(--accent);
+  --color-highlight: var(--highlight);
   --color-error: var(--error);
   --font-sans: var(--font-inter);
 
@@ -38,33 +83,84 @@
 }
 
 body {
-  background: var(--background);
+  background: linear-gradient(135deg, var(--gradient-7-start) 0%, var(--gradient-7-mid) 50%, var(--gradient-7-end) 100%);
+  background-attachment: fixed;
   color: var(--foreground);
   font-family: var(--font-sans), system-ui, sans-serif;
   overflow-x: hidden;
 }
 
+/* Gradient Utilities */
+.gradient-panel-3 {
+  background: linear-gradient(135deg, var(--gradient-3-start) 0%, var(--gradient-3-mid) 50%, var(--gradient-3-end) 100%);
+}
+
+.gradient-panel-7 {
+  background: linear-gradient(135deg, var(--gradient-7-start) 0%, var(--gradient-7-mid) 50%, var(--gradient-7-end) 100%);
+}
+
+.gradient-panel-8 {
+  background: linear-gradient(135deg, var(--gradient-8-start) 0%, var(--gradient-8-mid) 50%, var(--gradient-8-end) 100%);
+}
+
+.gradient-highlight {
+  background: linear-gradient(135deg, var(--gradient-16-start) 0%, var(--gradient-16-mid) 50%, var(--gradient-16-end) 100%);
+}
+
+.gradient-border-3 {
+  border: 2px solid transparent;
+  background-image: linear-gradient(var(--background), var(--background)),
+    linear-gradient(135deg, var(--gradient-3-start), var(--gradient-3-mid), var(--gradient-3-end));
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+}
+
+.gradient-border-16 {
+  border: 2px solid transparent;
+  background-image: linear-gradient(var(--background), var(--background)),
+    linear-gradient(135deg, var(--gradient-16-start), var(--gradient-16-mid), var(--gradient-16-end));
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+}
+
 /* Material Utilities */
 .material-card {
-  background-color: var(--card-bg);
-  border-radius: 8px;
+  background: rgba(30, 0, 51, 0.4);
+  backdrop-filter: blur(20px);
+  border-radius: 16px;
+  border: 1px solid rgba(126, 87, 194, 0.2);
   box-shadow: var(--shadow-1);
-  transition: box-shadow 0.3s ease-in-out;
+  transition: all 0.3s ease-in-out;
 }
 
 .material-card:hover {
   box-shadow: var(--shadow-3);
+  border-color: rgba(77, 208, 225, 0.4);
+  transform: translateY(-2px);
 }
 
 .material-btn {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-weight: 600;
-  border-radius: 4px;
+  border-radius: 8px;
   transition: all 0.2s;
+  background: linear-gradient(135deg, var(--gradient-16-start), var(--gradient-16-mid), var(--gradient-16-end));
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border: none;
 }
 
-/* Glow Effects (kept as requested but refined) */
+.material-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(233, 30, 99, 0.5);
+}
+
+/* Glow Effects */
 .glow-text {
-  text-shadow: 0 0 10px rgba(187, 134, 252, 0.5);
+  text-shadow: 0 0 20px rgba(126, 87, 194, 0.8), 0 0 40px rgba(77, 208, 225, 0.5);
+}
+
+.glow-border {
+  box-shadow: 0 0 20px rgba(126, 87, 194, 0.4), 0 0 40px rgba(77, 208, 225, 0.2);
 }
