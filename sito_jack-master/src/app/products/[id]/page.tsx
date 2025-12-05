@@ -15,6 +15,8 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
 
   const serializedProduct = {
     ...product,
+    specs: product.specs as Record<string, string> | null,
+    faq: product.faq as { question: string; answer: string; }[] | null,
     variants: product.variants.map(v => ({
       ...v,
       price: v.price.toString(),
