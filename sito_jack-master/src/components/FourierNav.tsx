@@ -5,13 +5,13 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { EyeSVG } from './EyeSVG'
 
-// Color Schemes (from standard Leibniz palette)
+// Color Schemes
 const COLOR_SCHEMES = {
-    10: { inactive: '#b300ff', hover: '#ff00ff' }, // Purple/Magenta - Secret Club
-    12: { inactive: '#ff9000', hover: '#ffcc00' }, // Orange/Gold - Custom
-    14: { inactive: '#0080ff', hover: '#00f7ff' }, // Blue/Cyan - Shop Offline
-    15: { inactive: '#00f7ff', hover: '#00ff88' }, // Cyan/Lime - Shop Online
-    16: { inactive: '#4CAF50', hover: '#00ff00' }  // Green/Bright Green - Cart
+    10: { inactive: '#b300ff', hover: '#ff00ff' },
+    12: { inactive: '#ff9000', hover: '#ffcc00' },
+    14: { inactive: '#0080ff', hover: '#00f7ff' },
+    15: { inactive: '#00f7ff', hover: '#00ff88' },
+    16: { inactive: '#4CAF50', hover: '#00ff00' }
 }
 
 const NAV_ITEMS = [
@@ -21,7 +21,7 @@ const NAV_ITEMS = [
         symbol: '☿',
         path: '/products',
         colorScheme: 15,
-        angle: -90 // Start at top
+        angle: -90
     },
     {
         id: 'custom',
@@ -66,9 +66,7 @@ export default function FourierNav() {
     const [rotation, setRotation] = useState(0)
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
     const [isMobile, setIsMobile] = useState(false)
-    const [planetsReady, setPlanetsReady] = useState(false)
 
-    // Mobile detection
     useEffect(() => {
         const checkMobile = () => {
             setIsMobile(window.innerWidth < 768)
@@ -100,27 +98,21 @@ export default function FourierNav() {
             if (progress < 1) {
                 requestAnimationFrame(animate)
             } else {
-                setTimeout(() => {
-                    setShowEye(false)
-                    // Delay before planets start emerging
-                    setTimeout(() => setPlanetsReady(true), 300)
-                }, 500)
+                setTimeout(() => setShowEye(false), 500)
             }
         }
         animate()
     }, [showEye])
 
-    // Autonomous Rotation - stops when hovering
     useEffect(() => {
-        if (hoveredItem || !planetsReady) return
+        if (hoveredItem) return
 
         const interval = setInterval(() => {
             setRotation(prev => (prev + 0.15) % 360)
         }, 50)
         return () => clearInterval(interval)
-    }, [hoveredItem, planetsReady])
+    }, [hoveredItem])
 
-    // Canvas Rendering
     useEffect(() => {
         const canvas = canvasRef.current
         if (!canvas) return
@@ -141,20 +133,16 @@ export default function FourierNav() {
 
             const centerX = canvas.width / 2
             const centerY = canvas.height / 2
-
-            // Reduced orbital radius for mobile visibility
             const eyeRadius = isMobile ? 100 : 200
             const planetRadius = isMobile ? 20 : 35
             const orbitalRadius = eyeRadius + planetRadius
 
-            // Draw single orbital circle
             ctx.strokeStyle = 'rgba(0, 247, 255, 0.2)'
             ctx.lineWidth = 1
             ctx.beginPath()
             ctx.arc(centerX, centerY, orbitalRadius, 0, Math.PI * 2)
             ctx.stroke()
 
-            // Connecting radial lines
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)'
             ctx.lineWidth = 0.5
             NAV_ITEMS.forEach(item => {
@@ -185,8 +173,6 @@ export default function FourierNav() {
 
     const getCirclePosition = (angle: number) => {
         const rad = ((angle + rotation) * Math.PI) / 180
-
-        // Reduced for mobile to fit in screen
         const eyeRadius = isMobile ? 100 : 200
         const planetRadius = isMobile ? 20 : 35
         const orbitalRadius = eyeRadius + planetRadius
@@ -198,9 +184,7 @@ export default function FourierNav() {
     }
 
     const getMoonSize = () => {
-        // Smaller on mobile for better visibility
-        const baseSize = isMobile ? 40 : 70
-        return baseSize
+        return isMobile ? 40 : 70
     }
 
     return (
@@ -220,11 +204,9 @@ export default function FourierNav() {
                 )}
             </AnimatePresence>
 
-            {/* Optimized for vertical scrolling - flexbox centering */}
             <div className="relative w-full min-h-screen overflow-hidden bg-black flex items-center justify-center">
                 <canvas ref={canvasRef} className="absolute inset-0 z-0" />
 
-                {/* Central Eye - Perfectly centered */}
                 <div
                     className="relative z-10 group pointer-events-none"
                     style={{
@@ -240,8 +222,7 @@ export default function FourierNav() {
                     <EyeSVG progress={1} color={showEye ? '#fff' : '#00f7ff'} main mousePos={mousePos} />
                 </div>
 
-                {/* Planets emerge from eye one by one */}
-                {planetsReady && NAV_ITEMS.map((item, index) => {
+                {NAV_ITEMS.map((item, index) => {
                     const isHovered = hoveredItem === item.id
                     const position = getCirclePosition(item.angle)
                     const size = getMoonSize()
@@ -252,28 +233,19 @@ export default function FourierNav() {
                         <motion.div
                             key={item.id}
                             className="absolute cursor-pointer pointer-events-auto"
-                            initial={{
-                                x: 0,
-                                y: 0,
-                                scale: 0,
-                                opacity: 0
-                            }}
+                            initial={{ opacity: 0, scale: 0.5 }}
                             animate={{
-                                x: position.x,
-                                y: position.y,
-                                scale: isHovered ? hoverSize / size : 1,
-                                opacity: 1
+                                opacity: 1,
+                                scale: isHovered ? hoverSize / size : 1
                             }}
                             transition={{
-                                delay: index * 0.2, // Emerge one by one
-                                duration: 0.8,
-                                type: 'spring',
-                                stiffness: 100,
-                                scale: { duration: 0.3 }
+                                opacity: { delay: 2.5 + (index * 0.1), duration: 0.4 },
+                                scale: { duration: 0.3, ease: 'easeOut' }
                             }}
                             style={{
-                                left: '50%',
-                                top: '50%',
+                                left: `calc(50% + ${position.x}px)`,
+                                top: `calc(50% + ${position.y}px)`,
+                                transform: 'translate(-50%, -50%)',
                                 zIndex: 20
                             }}
                             onMouseEnter={() => setHoveredItem(item.id)}
@@ -292,7 +264,6 @@ export default function FourierNav() {
                                         : `0 0 15px ${colors.inactive}40`
                                 }}
                             >
-                                {/* Wireframe Grid */}
                                 <svg
                                     className="absolute inset-0 w-full h-full pointer-events-none"
                                     viewBox="0 0 100 100"
@@ -335,7 +306,6 @@ export default function FourierNav() {
                                     />
                                 </svg>
 
-                                {/* Planetary Symbol */}
                                 <div className="flex flex-col items-center justify-center h-full relative z-10">
                                     <span
                                         className="font-black leading-none"
@@ -351,7 +321,6 @@ export default function FourierNav() {
                                 </div>
                             </div>
 
-                            {/* Label (appears on hover) */}
                             {isHovered && (
                                 <motion.div
                                     initial={{ opacity: 0, y: -10 }}
