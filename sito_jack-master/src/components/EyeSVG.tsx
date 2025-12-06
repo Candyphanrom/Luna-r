@@ -1,4 +1,23 @@
 import { motion } from 'framer-motion'
+import { useState, useEffect } from 'react'
+
+const CRYPTIC_PHRASES = [
+    "OBSERVING",
+    "THE OWLS ARE NOT WHAT THEY SEEM",
+    "THROUGH THE DARKNESS OF FUTURE PAST",
+    "IT IS HAPPENING AGAIN",
+    "THE GLOW FADES SLOWLY",
+    "WHERE WE'RE FROM, THE BIRDS SING A PRETTY SONG",
+    "MEANWHILE",
+    "BLUE ROSE",
+    "I'LL SEE YOU IN 25 YEARS",
+    "COOPER... COOPER...",
+    "ELECTRICITY",
+    "THE MYSTERY OF LIFE ISN'T A PROBLEM TO SOLVE",
+    "FALLING, FALLING",
+    "GARMONBOZIA",
+    "LODGE CALLING"
+]
 
 export const EyeSVG = ({
     progress,
@@ -11,11 +30,22 @@ export const EyeSVG = ({
     main?: boolean,
     mousePos?: { x: number, y: number }
 }) => {
-    // Calculate pupil position based on mousePos (clamped to eye radius)
-    // Reduced offset to keep it within the eyelids
     const maxOffset = 20
     const pupilX = 200 + (mousePos.x * maxOffset)
     const pupilY = 200 + (mousePos.y * maxOffset)
+
+    const [phraseIndex, setPhraseIndex] = useState(0)
+
+    // Cycle through phrases
+    useEffect(() => {
+        if (!main) return
+
+        const interval = setInterval(() => {
+            setPhraseIndex(prev => (prev + 1) % CRYPTIC_PHRASES.length)
+        }, 5000) // Change every 5 seconds
+
+        return () => clearInterval(interval)
+    }, [main])
 
     return (
         <motion.svg
@@ -123,9 +153,10 @@ export const EyeSVG = ({
                 )}
             </motion.g>
 
-            {/* Glitchy Data Text - Simplified */}
+            {/* Cryptic Lynch-Inspired Text */}
             {main && progress > 0.8 && (
                 <motion.text
+                    key={phraseIndex} // Re-trigger animation on phrase change
                     x="200"
                     y="360"
                     textAnchor="middle"
@@ -136,7 +167,7 @@ export const EyeSVG = ({
                     animate={{ opacity: [0, 0.8, 0.2, 0.8, 0] }}
                     transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
                 >
-                    OBSERVING // {Math.floor(progress * 100)}%
+                    {CRYPTIC_PHRASES[phraseIndex]}
                 </motion.text>
             )}
         </motion.svg>

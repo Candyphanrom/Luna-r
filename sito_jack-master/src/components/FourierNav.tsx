@@ -5,8 +5,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { EyeSVG } from './EyeSVG'
 
-const PHI = 1.618033988749895
-
 const NAV_ITEMS = [
     {
         id: 'shop',
@@ -14,7 +12,8 @@ const NAV_ITEMS = [
         kanji: '蔵',
         english: 'Storehouse',
         path: '/products',
-        color: '#E91E63', // Pink
+        color: '#00f7ff', // Cyan - Innovation, Primary CTA
+        probability: 25, // Highest - main conversion action
         angle: 0
     },
     {
@@ -23,17 +22,9 @@ const NAV_ITEMS = [
         kanji: '匠',
         english: 'Artisan',
         path: '/admin/products/new',
-        color: '#FF9800', // Orange
+        color: '#ff9000', // Orange - Energy, Secondary action
+        probability: 20,
         angle: 72
-    },
-    {
-        id: 'contact',
-        label: 'Contacts',
-        kanji: '結',
-        english: 'Connection',
-        path: '/contact',
-        color: '#2196F3', // Blue
-        angle: 144
     },
     {
         id: 'projects',
@@ -41,7 +32,18 @@ const NAV_ITEMS = [
         kanji: '業',
         english: 'Work',
         path: '/projects',
-        color: '#4CAF50', // Green
+        color: '#4CAF50', // Green - Trust, Portfolio
+        probability: 15,
+        angle: 144
+    },
+    {
+        id: 'contact',
+        label: 'Contacts',
+        kanji: '結',
+        english: 'Connection',
+        path: '/contact',
+        color: '#00ff88', // Lime - Support/Assistance
+        probability: 12,
         angle: 216
     },
     {
@@ -50,7 +52,8 @@ const NAV_ITEMS = [
         kanji: '道',
         english: 'The Way',
         path: '/about',
-        color: '#9C27B0', // Purple
+        color: '#b300ff', // Purple - Info/Exploration
+        probability: 8,
         angle: 288
     }
 ]
@@ -61,15 +64,9 @@ export default function FourierNav() {
     const [showEye, setShowEye] = useState(true)
     const [eyeProgress, setEyeProgress] = useState(0)
     const [hoveredItem, setHoveredItem] = useState<string | null>(null)
-
-    // 3D Rotation State
     const [rotation, setRotation] = useState(0)
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
-    const [isDragging, setIsDragging] = useState(false)
-    const [dragStartY, setDragStartY] = useState(0)
-    const [dragStartRotation, setDragStartRotation] = useState(0)
 
-    // Mouse Tracking for Eye
     useEffect(() => {
         const handleMouseMove = (e: MouseEvent) => {
             const x = (e.clientX - window.innerWidth / 2) / (window.innerWidth / 2)
@@ -80,43 +77,6 @@ export default function FourierNav() {
         return () => window.removeEventListener('mousemove', handleMouseMove)
     }, [])
 
-    // Scroll & Drag Interaction
-    useEffect(() => {
-        const handleWheel = (e: WheelEvent) => {
-            setRotation(prev => prev + e.deltaY * 0.05)
-        }
-
-        const handleMouseDown = (e: MouseEvent) => {
-            setIsDragging(true)
-            setDragStartY(e.clientY)
-            setDragStartRotation(rotation)
-        }
-
-        const handleMouseUp = () => {
-            setIsDragging(false)
-        }
-
-        const handleMouseMove = (e: MouseEvent) => {
-            if (isDragging) {
-                const deltaY = e.clientY - dragStartY
-                setRotation(dragStartRotation + deltaY * 0.5)
-            }
-        }
-
-        window.addEventListener('wheel', handleWheel)
-        window.addEventListener('mousedown', handleMouseDown)
-        window.addEventListener('mouseup', handleMouseUp)
-        window.addEventListener('mousemove', handleMouseMove)
-
-        return () => {
-            window.removeEventListener('wheel', handleWheel)
-            window.removeEventListener('mousedown', handleMouseDown)
-            window.removeEventListener('mouseup', handleMouseUp)
-            window.removeEventListener('mousemove', handleMouseMove)
-        }
-    }, [isDragging, dragStartY, dragStartRotation, rotation])
-
-    // Eye Intro Animation
     useEffect(() => {
         if (!showEye) return
         const duration = 2000
@@ -135,18 +95,13 @@ export default function FourierNav() {
         animate()
     }, [showEye])
 
-    // Autonomous Rotation
     useEffect(() => {
-        if (isDragging) return
-
         const interval = setInterval(() => {
-            setRotation(prev => prev + 0.2) // Doubled speed
+            setRotation(prev => (prev + 0.15) % 360)
         }, 50)
-
         return () => clearInterval(interval)
-    }, [isDragging])
+    }, [])
 
-    // Canvas Rendering (Background Particles)
     useEffect(() => {
         const canvas = canvasRef.current
         if (!canvas) return
@@ -162,22 +117,44 @@ export default function FourierNav() {
         window.addEventListener('resize', resize)
         resize()
 
-        const particles = Array.from({ length: 30 }, () => ({
-            x: Math.random() * canvas.width,
-            y: Math.random() * canvas.height,
-            size: Math.random() * 2,
-            alpha: Math.random() * 0.3
-        }))
-
         const render = () => {
             ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-            particles.forEach(p => {
-                ctx.fillStyle = `rgba(255, 255, 255, ${p.alpha})`
+            const centerX = canvas.width / 2
+            const centerY = canvas.height / 2
+            const orbitalRadius = 300
+
+            ctx.strokeStyle = 'rgba(0, 247, 255, 0.15)'
+            ctx.lineWidth = 1
+            ctx.beginPath()
+            ctx.arc(centerX, centerY, orbitalRadius, 0, Math.PI * 2)
+            ctx.stroke()
+
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)'
+            ctx.lineWidth = 0.5
+            NAV_ITEMS.forEach(item => {
+                const angleRad = ((item.angle + rotation) * Math.PI) / 180
+                const x = centerX + Math.cos(angleRad) * orbitalRadius
+                const y = centerY + Math.sin(angleRad) * orbitalRadius
+
                 ctx.beginPath()
-                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2)
-                ctx.fill()
+                ctx.moveTo(centerX, centerY)
+                ctx.lineTo(x, y)
+                ctx.stroke()
             })
+
+            ctx.strokeStyle = 'rgba(0, 247, 255, 0.08)'
+            ctx.lineWidth = 1
+            ctx.beginPath()
+            NAV_ITEMS.forEach((item, i) => {
+                const angleRad = ((item.angle + rotation) * Math.PI) / 180
+                const x = centerX + Math.cos(angleRad) * orbitalRadius
+                const y = centerY + Math.sin(angleRad) * orbitalRadius
+                if (i === 0) ctx.moveTo(x, y)
+                else ctx.lineTo(x, y)
+            })
+            ctx.closePath()
+            ctx.stroke()
 
             animationFrameId = requestAnimationFrame(render)
         }
@@ -187,25 +164,23 @@ export default function FourierNav() {
             window.removeEventListener('resize', resize)
             cancelAnimationFrame(animationFrameId)
         }
-    }, [])
+    }, [rotation])
 
     const handleClick = (path: string) => router.push(path)
 
-    // 3D Projection Helper
-    const get3DPosition = (angleDeg: number) => {
-        const angleRad = ((angleDeg + rotation) * Math.PI) / 180
+    const getCirclePosition = (angle: number) => {
+        const rad = ((angle + rotation) * Math.PI) / 180
+        const orbitalRadius = 300
+        return {
+            x: Math.cos(rad) * orbitalRadius,
+            y: Math.sin(rad) * orbitalRadius
+        }
+    }
 
-        const radiusY = 245 // 30% closer (350 * 0.7)
-        const radiusZ = 105 // 30% closer (150 * 0.7)
-
-        const y = Math.sin(angleRad) * radiusY
-        const z = Math.cos(angleRad) * radiusZ
-
-        const perspective = 1000
-        const scale = (perspective + z) / perspective
-        const opacity = Math.max(0.2, (z + radiusZ) / (2 * radiusZ))
-
-        return { x: 0, y, z, scale, opacity }
+    // Calculate size based on probability (25% = 100px, scales down)
+    const getMoonSize = (probability: number) => {
+        const baseSize = 40 + (probability * 2.4) // 25% = 100px, 8% = 59px
+        return Math.round(baseSize)
     }
 
     return (
@@ -225,111 +200,127 @@ export default function FourierNav() {
                 )}
             </AnimatePresence>
 
-            <div className="relative w-full h-screen overflow-hidden bg-black flex items-center justify-center cursor-grab active:cursor-grabbing">
+            <div className="relative w-full h-screen overflow-hidden bg-black flex items-center justify-center">
                 <canvas ref={canvasRef} className="absolute inset-0 z-0" />
 
-                {/* Central Moon / Eye Container */}
-                <div className="relative z-10 group pointer-events-none">
-                    <div className="absolute inset-0 bg-blue-500/10 blur-3xl rounded-full group-hover:bg-blue-400/20 transition-all duration-500" />
+                {/* Central Eye */}
+                <div className="relative z-10 group pointer-events-none" style={{ width: '400px', height: '400px' }}>
+                    <div className="absolute inset-0 bg-cyan-500/10 blur-3xl rounded-full group-hover:bg-cyan-400/20 transition-all duration-500" />
                     <EyeSVG progress={1} color={showEye ? '#fff' : '#00f7ff'} main mousePos={mousePos} />
                 </div>
 
-                {/* 3D Orbiting Wireframe Moons */}
+                {/* Probability-Weighted Wireframe Moons */}
                 {NAV_ITEMS.map((item) => {
                     const isHovered = hoveredItem === item.id
-                    const { x, y, z, scale, opacity } = get3DPosition(item.angle)
-                    const zIndex = z > 0 ? 20 : 5
+                    const position = getCirclePosition(item.angle)
+                    const size = getMoonSize(item.probability)
+                    const hoverSize = size * 1.5
 
                     return (
                         <motion.div
                             key={item.id}
-                            className="absolute cursor-pointer"
+                            className="absolute cursor-pointer z-10 pointer-events-auto"
                             style={{
                                 left: '50%',
                                 top: '50%',
-                                transform: `translate(-50%, -50%) translate3d(${x}px, ${y}px, ${z}px) scale(${scale})`,
-                                zIndex: zIndex,
-                                opacity: opacity
+                                transform: `translate(calc(-50% + ${position.x}px), calc(-50% + ${position.y}px))`
                             }}
                             onMouseEnter={() => setHoveredItem(item.id)}
                             onMouseLeave={() => setHoveredItem(null)}
                             onClick={() => handleClick(item.path)}
+                            animate={{
+                                scale: isHovered ? hoverSize / size : 1
+                            }}
+                            transition={{ duration: 0.3, ease: 'easeOut' }}
                         >
-                            {/* Wireframe Moon Container */}
+                            {/* Wireframe Moon */}
                             <div
-                                className={`w-16 h-16 rounded-full flex flex-col items-center justify-center transition-all duration-300 relative
-                                    ${isHovered ? 'scale-[2]' : 'scale-100'}
-                                `}
+                                className="rounded-full flex flex-col items-center justify-center relative"
                                 style={{
+                                    width: `${size}px`,
+                                    height: `${size}px`,
                                     background: 'transparent',
-                                    border: `1px solid ${isHovered ? item.color : 'rgba(255,255,255,0.3)'}`,
+                                    border: `2px solid ${isHovered ? item.color : 'rgba(255,255,255,0.4)'}`,
                                     boxShadow: isHovered
                                         ? `0 0 30px ${item.color}, inset 0 0 20px ${item.color}40`
                                         : '0 0 10px rgba(255,255,255,0.2)'
                                 }}
                             >
-                                {/* Wireframe Grid Overlay */}
+                                {/* Probability Badge */}
+                                <div
+                                    className="absolute -top-2 -right-2 text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+                                    style={{
+                                        background: 'rgba(0,0,0,0.8)',
+                                        border: `1px solid ${item.color}`,
+                                        color: item.color,
+                                        boxShadow: `0 0 8px ${item.color}40`
+                                    }}
+                                >
+                                    {item.probability}%
+                                </div>
+
+                                {/* Wireframe Grid */}
                                 <svg
                                     className="absolute inset-0 w-full h-full pointer-events-none"
                                     viewBox="0 0 100 100"
-                                    style={{ opacity: isHovered ? 0.8 : 0.4 }}
+                                    style={{ opacity: isHovered ? 0.9 : 0.5 }}
                                 >
-                                    {/* Latitude lines */}
-                                    {[20, 40, 60, 80].map(latY => (
+                                    {[25, 50, 75].map(y => (
                                         <ellipse
-                                            key={`lat-${latY}`}
+                                            key={`lat-${y}`}
                                             cx="50"
                                             cy="50"
-                                            rx="48"
-                                            ry={48 * Math.cos((latY - 50) * Math.PI / 100)}
+                                            rx="47"
+                                            ry={47 * Math.cos((y - 50) * Math.PI / 100)}
                                             fill="none"
-                                            stroke={isHovered ? item.color : 'rgba(255,255,255,0.3)'}
-                                            strokeWidth="0.5"
-                                            transform={`translate(0, ${latY - 50})`}
+                                            stroke={isHovered ? item.color : 'rgba(255,255,255,0.4)'}
+                                            strokeWidth="0.8"
+                                            transform={`translate(0, ${y - 50})`}
                                         />
                                     ))}
 
-                                    {/* Longitude lines */}
-                                    {[0, 30, 60, 90, 120, 150].map(angle => (
+                                    {[0, 45, 90, 135].map(angle => (
                                         <ellipse
                                             key={`lon-${angle}`}
                                             cx="50"
                                             cy="50"
-                                            rx={48 * Math.abs(Math.cos(angle * Math.PI / 180))}
-                                            ry="48"
+                                            rx={47 * Math.abs(Math.cos(angle * Math.PI / 180))}
+                                            ry="47"
                                             fill="none"
-                                            stroke={isHovered ? item.color : 'rgba(255,255,255,0.3)'}
-                                            strokeWidth="0.5"
+                                            stroke={isHovered ? item.color : 'rgba(255,255,255,0.4)'}
+                                            strokeWidth="0.8"
                                         />
                                     ))}
 
-                                    {/* Equator */}
                                     <circle
                                         cx="50"
                                         cy="50"
-                                        r="48"
+                                        r="47"
                                         fill="none"
-                                        stroke={isHovered ? item.color : 'rgba(255,255,255,0.4)'}
-                                        strokeWidth="1"
+                                        stroke={isHovered ? item.color : 'rgba(255,255,255,0.5)'}
+                                        strokeWidth="1.5"
                                     />
                                 </svg>
 
                                 {/* Kanji Content */}
                                 <div className="flex flex-col items-center justify-center h-full relative z-10">
                                     <span
-                                        className="text-2xl font-black leading-none transition-all duration-300"
+                                        className="font-black leading-none"
                                         style={{
-                                            color: isHovered ? item.color : '#f0f0f0',
-                                            textShadow: isHovered ? `0 0 20px ${item.color}, 0 0 40px ${item.color}` : '0 0 10px rgba(255,255,255,0.2)',
-                                            transform: isHovered ? 'scale(1.1)' : 'scale(1)'
+                                            fontSize: `${Math.max(size * 0.4, 16)}px`,
+                                            color: isHovered ? item.color : 'rgba(255,255,255,0.8)',
+                                            textShadow: isHovered ? `0 0 15px ${item.color}` : 'none'
                                         }}
                                     >
                                         {item.kanji}
                                     </span>
 
                                     <span
-                                        className="text-[6px] uppercase tracking-widest font-bold transition-colors duration-300 mt-1 opacity-80"
-                                        style={{ color: isHovered ? item.color : '#f0f0f0' }}
+                                        className="uppercase tracking-wider font-bold mt-1 opacity-70"
+                                        style={{
+                                            fontSize: `${Math.max(size * 0.09, 7)}px`,
+                                            color: isHovered ? item.color : 'rgba(255,255,255,0.6)'
+                                        }}
                                     >
                                         {item.english}
                                     </span>
