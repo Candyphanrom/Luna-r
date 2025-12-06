@@ -18,7 +18,7 @@ const NAV_ITEMS = [
     {
         id: 'shop-online',
         label: 'Shop Online',
-        symbol: '☿', // Mercury
+        symbol: '☿',
         path: '/products',
         colorScheme: 15,
         angle: -90 // Start at top
@@ -26,15 +26,15 @@ const NAV_ITEMS = [
     {
         id: 'custom',
         label: 'Custom',
-        symbol: '♃', // Jupiter
+        symbol: '♃',
         path: '/admin/products/new',
         colorScheme: 12,
-        angle: -18 // 72° spacing
+        angle: -18
     },
     {
         id: 'shop-offline',
         label: 'Shop Offline',
-        symbol: '♆', // Neptune
+        symbol: '♆',
         path: '/contact',
         colorScheme: 14,
         angle: 54
@@ -42,7 +42,7 @@ const NAV_ITEMS = [
     {
         id: 'cart',
         label: 'Shopping Cart',
-        symbol: '♄', // Saturn
+        symbol: '♄',
         path: '/checkout',
         colorScheme: 16,
         angle: 126
@@ -50,7 +50,7 @@ const NAV_ITEMS = [
     {
         id: 'secret-club',
         label: 'Secret Club',
-        symbol: '♅', // Uranus
+        symbol: '♅',
         path: '/experience',
         colorScheme: 10,
         angle: 198
@@ -66,6 +66,7 @@ export default function FourierNav() {
     const [rotation, setRotation] = useState(0)
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
     const [isMobile, setIsMobile] = useState(false)
+    const [planetsReady, setPlanetsReady] = useState(false)
 
     // Mobile detection
     useEffect(() => {
@@ -99,7 +100,11 @@ export default function FourierNav() {
             if (progress < 1) {
                 requestAnimationFrame(animate)
             } else {
-                setTimeout(() => setShowEye(false), 500)
+                setTimeout(() => {
+                    setShowEye(false)
+                    // Delay before planets start emerging
+                    setTimeout(() => setPlanetsReady(true), 300)
+                }, 500)
             }
         }
         animate()
@@ -107,15 +112,15 @@ export default function FourierNav() {
 
     // Autonomous Rotation - stops when hovering
     useEffect(() => {
-        if (hoveredItem) return // Stop rotation when hovering
+        if (hoveredItem || !planetsReady) return
 
         const interval = setInterval(() => {
             setRotation(prev => (prev + 0.15) % 360)
         }, 50)
         return () => clearInterval(interval)
-    }, [hoveredItem])
+    }, [hoveredItem, planetsReady])
 
-    // Canvas Rendering (Multiple orbital circles)
+    // Canvas Rendering
     useEffect(() => {
         const canvas = canvasRef.current
         if (!canvas) return
@@ -137,9 +142,9 @@ export default function FourierNav() {
             const centerX = canvas.width / 2
             const centerY = canvas.height / 2
 
-            // Calculate orbital radius (eye + planet size)
-            const eyeRadius = isMobile ? 130 : 200
-            const planetRadius = isMobile ? 25 : 35
+            // Reduced orbital radius for mobile visibility
+            const eyeRadius = isMobile ? 100 : 200
+            const planetRadius = isMobile ? 20 : 35
             const orbitalRadius = eyeRadius + planetRadius
 
             // Draw single orbital circle
@@ -181,11 +186,9 @@ export default function FourierNav() {
     const getCirclePosition = (angle: number) => {
         const rad = ((angle + rotation) * Math.PI) / 180
 
-        // Calculate radius so planets are tangent to eye's outer edge
-        // Eye radius: 200px (desktop) or 130px (mobile)
-        // Planet radius: 35px (desktop) or 25px (mobile)
-        const eyeRadius = isMobile ? 130 : 200
-        const planetRadius = isMobile ? 25 : 35
+        // Reduced for mobile to fit in screen
+        const eyeRadius = isMobile ? 100 : 200
+        const planetRadius = isMobile ? 20 : 35
         const orbitalRadius = eyeRadius + planetRadius
 
         return {
@@ -195,8 +198,8 @@ export default function FourierNav() {
     }
 
     const getMoonSize = () => {
-        // Uniform size for all elements
-        const baseSize = isMobile ? 50 : 70
+        // Smaller on mobile for better visibility
+        const baseSize = isMobile ? 40 : 70
         return baseSize
     }
 
@@ -217,17 +220,28 @@ export default function FourierNav() {
                 )}
             </AnimatePresence>
 
-            <div className="relative w-full h-screen overflow-hidden bg-black flex flex-col items-center justify-center">
+            {/* Optimized for vertical scrolling - flexbox centering */}
+            <div className="relative w-full min-h-screen overflow-hidden bg-black flex items-center justify-center">
                 <canvas ref={canvasRef} className="absolute inset-0 z-0" />
 
-                {/* Central Eye - Leibniz Universal Monad */}
-                <div className="relative z-10 group pointer-events-none" style={{ width: isMobile ? '260px' : '400px', height: isMobile ? '260px' : '400px' }}>
+                {/* Central Eye - Perfectly centered */}
+                <div
+                    className="relative z-10 group pointer-events-none"
+                    style={{
+                        width: isMobile ? '200px' : '400px',
+                        height: isMobile ? '200px' : '400px',
+                        position: 'absolute',
+                        left: '50%',
+                        top: '50%',
+                        transform: 'translate(-50%, -50%)'
+                    }}
+                >
                     <div className="absolute inset-0 bg-cyan-500/10 blur-3xl rounded-full group-hover:bg-cyan-400/20 transition-all duration-500" />
                     <EyeSVG progress={1} color={showEye ? '#fff' : '#00f7ff'} main mousePos={mousePos} />
                 </div>
 
-                {/* Aristotelian Elements - Planetary Symbols */}
-                {NAV_ITEMS.map((item) => {
+                {/* Planets emerge from eye one by one */}
+                {planetsReady && NAV_ITEMS.map((item, index) => {
                     const isHovered = hoveredItem === item.id
                     const position = getCirclePosition(item.angle)
                     const size = getMoonSize()
@@ -238,19 +252,33 @@ export default function FourierNav() {
                         <motion.div
                             key={item.id}
                             className="absolute cursor-pointer pointer-events-auto"
+                            initial={{
+                                x: 0,
+                                y: 0,
+                                scale: 0,
+                                opacity: 0
+                            }}
+                            animate={{
+                                x: position.x,
+                                y: position.y,
+                                scale: isHovered ? hoverSize / size : 1,
+                                opacity: 1
+                            }}
+                            transition={{
+                                delay: index * 0.2, // Emerge one by one
+                                duration: 0.8,
+                                type: 'spring',
+                                stiffness: 100,
+                                scale: { duration: 0.3 }
+                            }}
                             style={{
-                                left: `calc(50% + ${position.x}px)`,
-                                top: `calc(50% + ${position.y}px)`,
-                                transform: 'translate(-50%, -50%)',
+                                left: '50%',
+                                top: '50%',
                                 zIndex: 20
                             }}
                             onMouseEnter={() => setHoveredItem(item.id)}
                             onMouseLeave={() => setHoveredItem(null)}
                             onClick={() => handleClick(item.path)}
-                            animate={{
-                                scale: isHovered ? hoverSize / size : 1
-                            }}
-                            transition={{ duration: 0.4, ease: 'easeOut' }}
                         >
                             <div
                                 className="rounded-full flex flex-col items-center justify-center relative"
@@ -312,7 +340,7 @@ export default function FourierNav() {
                                     <span
                                         className="font-black leading-none"
                                         style={{
-                                            fontSize: `${Math.max(size * 0.5, 20)}px`,
+                                            fontSize: `${Math.max(size * 0.5, 16)}px`,
                                             color: isHovered ? colors.hover : colors.inactive,
                                             textShadow: isHovered ? `0 0 20px ${colors.hover}` : 'none',
                                             transition: 'all 0.3s ease'
@@ -331,7 +359,7 @@ export default function FourierNav() {
                                     className="absolute top-full mt-2 left-1/2 transform -translate-x-1/2 whitespace-nowrap"
                                 >
                                     <span
-                                        className="text-sm font-bold uppercase tracking-wider"
+                                        className="text-xs font-bold uppercase tracking-wider"
                                         style={{
                                             color: colors.hover,
                                             textShadow: `0 0 10px ${colors.hover}`
