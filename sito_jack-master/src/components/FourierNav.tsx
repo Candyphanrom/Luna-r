@@ -167,7 +167,6 @@ export default function FourierNav() {
     }, [rotation])
 
     const handleClick = (path: string) => {
-        // Trigger cryptic phrase on interaction
         window.dispatchEvent(new Event('lunarInteraction'))
         router.push(path)
     }
@@ -181,9 +180,8 @@ export default function FourierNav() {
         }
     }
 
-    // Calculate size based on probability (25% = 100px, scales down)
     const getMoonSize = (probability: number) => {
-        const baseSize = 40 + (probability * 2.4) // 25% = 100px, 8% = 59px
+        const baseSize = 40 + (probability * 2.4)
         return Math.round(baseSize)
     }
 
@@ -207,13 +205,11 @@ export default function FourierNav() {
             <div className="relative w-full h-screen overflow-hidden bg-black flex items-center justify-center">
                 <canvas ref={canvasRef} className="absolute inset-0 z-0" />
 
-                {/* Central Eye */}
                 <div className="relative z-10 group pointer-events-none" style={{ width: '400px', height: '400px' }}>
                     <div className="absolute inset-0 bg-cyan-500/10 blur-3xl rounded-full group-hover:bg-cyan-400/20 transition-all duration-500" />
                     <EyeSVG progress={1} color={showEye ? '#fff' : '#00f7ff'} main mousePos={mousePos} />
                 </div>
 
-                {/* Probability-Weighted Wireframe Moons */}
                 {NAV_ITEMS.map((item) => {
                     const isHovered = hoveredItem === item.id
                     const position = getCirclePosition(item.angle)
@@ -238,7 +234,6 @@ export default function FourierNav() {
                             }}
                             transition={{ duration: 0.3, ease: 'easeOut' }}
                         >
-                            {/* Wireframe Moon */}
                             <div
                                 className="rounded-full flex flex-col items-center justify-center relative"
                                 style={{
@@ -251,16 +246,6 @@ export default function FourierNav() {
                                         : '0 0 10px rgba(255,255,255,0.2)'
                                 }}
                             >
-                                {/* Probability Badge */}
-                                <div
-                                    className="absolute -top-2 -right-2 text-[9px] font-bold px-1.5 py-0.5 rounded-full"
-                                    style={{
-                                        background: 'rgba(0,0,0,0.8)',
-                                        border: `1px solid ${item.color}`,
-                                        color: item.color,
-                                        boxShadow: `0 0 8px ${item.color}40`
-                                    }}
-                                    {/* Wireframe Grid */}
                                 <svg
                                     className="absolute inset-0 w-full h-full pointer-events-none"
                                     viewBox="0 0 100 100"
@@ -303,7 +288,6 @@ export default function FourierNav() {
                                     />
                                 </svg>
 
-                                {/* Kanji Content */}
                                 <div className="flex flex-col items-center justify-center h-full relative z-10">
                                     <span
                                         className="font-black leading-none"
