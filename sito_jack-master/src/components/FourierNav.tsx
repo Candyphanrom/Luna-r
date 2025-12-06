@@ -64,7 +64,6 @@ export default function FourierNav() {
     const [eyeProgress, setEyeProgress] = useState(0)
     const [hoveredItem, setHoveredItem] = useState<string | null>(null)
     const [rotation, setRotation] = useState(0)
-    const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
     const [isMobile, setIsMobile] = useState(false)
 
     useEffect(() => {
@@ -74,16 +73,6 @@ export default function FourierNav() {
         checkMobile()
         window.addEventListener('resize', checkMobile)
         return () => window.removeEventListener('resize', checkMobile)
-    }, [])
-
-    useEffect(() => {
-        const handleMouseMove = (e: MouseEvent) => {
-            const x = (e.clientX - window.innerWidth / 2) / (window.innerWidth / 2)
-            const y = (e.clientY - window.innerHeight / 2) / (window.innerHeight / 2)
-            setMousePos({ x, y })
-        }
-        window.addEventListener('mousemove', handleMouseMove)
-        return () => window.removeEventListener('mousemove', handleMouseMove)
     }, [])
 
     useEffect(() => {
@@ -198,7 +187,7 @@ export default function FourierNav() {
                         className="fixed inset-0 z-[200] flex items-center justify-center bg-black"
                     >
                         <div className="relative">
-                            <EyeSVG progress={eyeProgress} color="#00f7ff" main mousePos={mousePos} />
+                            <EyeSVG progress={eyeProgress} color="#00f7ff" main />
                         </div>
                     </motion.div>
                 )}
@@ -219,7 +208,7 @@ export default function FourierNav() {
                     }}
                 >
                     <div className="absolute inset-0 bg-cyan-500/10 blur-3xl rounded-full group-hover:bg-cyan-400/20 transition-all duration-500" />
-                    <EyeSVG progress={1} color={showEye ? '#fff' : '#00f7ff'} main mousePos={mousePos} />
+                    <EyeSVG progress={1} color={showEye ? '#fff' : '#00f7ff'} main />
                 </div>
 
                 {NAV_ITEMS.map((item, index) => {

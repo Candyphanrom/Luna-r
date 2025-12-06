@@ -20,37 +20,30 @@ const CRYPTIC_PHRASES = [
 export const EyeSVG = ({
     progress,
     color,
-    main = false,
-    mousePos = { x: 0, y: 0 }
+    main = false
 }: {
     progress: number,
     color: string,
-    main?: boolean,
-    mousePos?: { x: number, y: number }
+    main?: boolean
 }) => {
-    const maxOffset = 20
-    const pupilX = 200 + (mousePos.x * maxOffset)
-    const pupilY = 200 + (mousePos.y * maxOffset)
-
     const [phraseIndex, setPhraseIndex] = useState(0)
     const [showPhrase, setShowPhrase] = useState(false)
+    const [fourierTime, setFourierTime] = useState(0)
 
-    // Sporadic phrase appearance - random longer intervals
+    // Sporadic phrase appearance
     useEffect(() => {
         if (!main) return
 
         const scheduleNext = () => {
-            // Random delay between 20-40 seconds
             const randomDelay = 20000 + Math.random() * 20000
 
             setTimeout(() => {
                 setShowPhrase(true)
                 setPhraseIndex(Math.floor(Math.random() * CRYPTIC_PHRASES.length))
 
-                // Hide after 4 seconds
                 setTimeout(() => {
                     setShowPhrase(false)
-                    scheduleNext() // Schedule next appearance
+                    scheduleNext()
                 }, 4000)
             }, randomDelay)
         }
@@ -58,7 +51,6 @@ export const EyeSVG = ({
         scheduleNext()
     }, [main])
 
-    // Trigger on window interaction event
     useEffect(() => {
         const handleInteraction = () => {
             setShowPhrase(true)
@@ -70,6 +62,41 @@ export const EyeSVG = ({
         return () => window.removeEventListener('lunarInteraction', handleInteraction)
     }, [])
 
+    // Fourier-based pupil movement
+    useEffect(() => {
+        if (!main) return
+
+        const animate = () => {
+            setFourierTime(prev => prev + 0.02)
+            requestAnimationFrame(animate)
+        }
+
+        const frameId = requestAnimationFrame(animate)
+        return () => cancelAnimationFrame(frameId)
+    }, [main])
+
+    // Calculate pupil position using Fourier series
+    const getPupilPosition = () => {
+        if (!main) return { x: 200, y: 200 }
+
+        // Combine multiple frequencies for organic movement
+        const x = 200 + (
+            15 * Math.sin(fourierTime * 0.7) +
+            8 * Math.sin(fourierTime * 1.3 + 1) +
+            4 * Math.sin(fourierTime * 2.1 + 2)
+        )
+
+        const y = 200 + (
+            15 * Math.cos(fourierTime * 0.5) +
+            8 * Math.cos(fourierTime * 1.1 + 0.5) +
+            4 * Math.cos(fourierTime * 1.9 + 1.5)
+        )
+
+        return { x, y }
+    }
+
+    const pupilPos = getPupilPosition()
+
     return (
         <motion.svg
             width="400"
@@ -77,7 +104,6 @@ export const EyeSVG = ({
             viewBox="0 0 400 400"
             animate={{ scale: 1 + progress * 0.05 }}
         >
-            {/* Outer Iris Rings - Simplified */}
             <motion.circle
                 cx="200"
                 cy="200"
@@ -91,7 +117,6 @@ export const EyeSVG = ({
                 style={{ opacity: 0.2 }}
             />
 
-            {/* Eyelids - Smoother Curves */}
             <motion.path
                 d={`M 50 200 Q 200 ${200 - 140 * progress} 350 200`}
                 fill="none"
@@ -111,12 +136,11 @@ export const EyeSVG = ({
                 transition={{ duration: 1 }}
             />
 
-            {/* Tracking Pupil Container */}
+            {/* Fourier-animated Pupil */}
             <motion.g
-                animate={{ x: pupilX - 200, y: pupilY - 200 }}
-                transition={{ type: "spring", stiffness: 150, damping: 15 }}
+                animate={{ x: pupilPos.x - 200, y: pupilPos.y - 200 }}
+                transition={{ type: "tween", duration: 0.1, ease: "linear" }}
             >
-                {/* Iris Boundary - Smaller to fit */}
                 <circle
                     cx="200"
                     cy="200"
@@ -127,7 +151,6 @@ export const EyeSVG = ({
                     opacity="0.8"
                 />
 
-                {/* Internal Fourier Series Animation */}
                 {main && (
                     <g transform="translate(200, 200)">
                         {[...Array(3)].map((_, i) => (
@@ -159,12 +182,10 @@ export const EyeSVG = ({
                                 />
                             </motion.g>
                         ))}
-                        {/* Central Core */}
                         <circle cx="0" cy="0" r="4" fill="#fff" />
                     </g>
                 )}
 
-                {/* Pupil Fill (if not main) */}
                 {!main && (
                     <circle
                         cx="200"
@@ -176,7 +197,6 @@ export const EyeSVG = ({
                 )}
             </motion.g>
 
-            {/* Cryptic Lynch-Inspired Text - Sporadic */}
             {main && progress > 0.8 && showPhrase && (
                 <motion.text
                     key={phraseIndex}
