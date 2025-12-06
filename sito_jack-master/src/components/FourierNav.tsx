@@ -21,8 +21,7 @@ const NAV_ITEMS = [
         symbol: '☿', // Mercury
         path: '/products',
         colorScheme: 15,
-        probability: 25,
-        orbitalRadius: 300,
+        orbitalRadius: 180,
         angle: 0
     },
     {
@@ -31,8 +30,7 @@ const NAV_ITEMS = [
         symbol: '♃', // Jupiter
         path: '/admin/products/new',
         colorScheme: 12,
-        probability: 20,
-        orbitalRadius: 260,
+        orbitalRadius: 180,
         angle: 72
     },
     {
@@ -41,8 +39,7 @@ const NAV_ITEMS = [
         symbol: '♆', // Neptune
         path: '/contact',
         colorScheme: 14,
-        probability: 15,
-        orbitalRadius: 220,
+        orbitalRadius: 180,
         angle: 144
     },
     {
@@ -51,8 +48,7 @@ const NAV_ITEMS = [
         symbol: '♄', // Saturn
         path: '/checkout',
         colorScheme: 16,
-        probability: 18,
-        orbitalRadius: 280,
+        orbitalRadius: 180,
         angle: 216
     },
     {
@@ -61,8 +57,7 @@ const NAV_ITEMS = [
         symbol: '♅', // Uranus
         path: '/experience',
         colorScheme: 10,
-        probability: 12,
-        orbitalRadius: 240,
+        orbitalRadius: 180,
         angle: 288
     }
 ]
@@ -198,10 +193,10 @@ export default function FourierNav() {
         }
     }
 
-    const getMoonSize = (probability: number) => {
-        const baseSize = 40 + (probability * 2.4)
-        const scaleFactor = isMobile ? 0.65 : 1
-        return Math.round(baseSize * scaleFactor)
+    const getMoonSize = () => {
+        // Uniform size for all elements
+        const baseSize = isMobile ? 50 : 70
+        return baseSize
     }
 
     return (
@@ -221,7 +216,7 @@ export default function FourierNav() {
                 )}
             </AnimatePresence>
 
-            <div className="relative w-full h-screen overflow-hidden bg-black flex items-center justify-center">
+            <div className="relative w-full h-screen overflow-hidden bg-black flex flex-col items-center justify-center">
                 <canvas ref={canvasRef} className="absolute inset-0 z-0" />
 
                 {/* Central Eye - Leibniz Universal Monad */}
@@ -234,7 +229,7 @@ export default function FourierNav() {
                 {NAV_ITEMS.map((item) => {
                     const isHovered = hoveredItem === item.id
                     const position = getCirclePosition(item.angle, item.orbitalRadius)
-                    const size = getMoonSize(item.probability)
+                    const size = getMoonSize()
                     const hoverSize = size * 1.8
                     const colors = COLOR_SCHEMES[item.colorScheme as keyof typeof COLOR_SCHEMES]
 
