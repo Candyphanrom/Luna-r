@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
-
 import { EyeSVG } from './EyeSVG'
 
 const PHI = 1.618033988749895
@@ -12,46 +11,46 @@ const NAV_ITEMS = [
     {
         id: 'shop',
         label: 'Shop',
+        kanji: '蔵',
+        english: 'Storehouse',
         path: '/products',
-        symbol: '☿',
-        inactiveColor: '#E91E63',
-        hoverColor: '#673AB7',
+        color: '#E91E63', // Pink
         angle: 0
     },
     {
         id: 'custom',
         label: 'Custom Order',
+        kanji: '匠',
+        english: 'Artisan',
         path: '/admin/products/new',
-        symbol: '♃',
-        inactiveColor: '#FF9800',
-        hoverColor: '#F44336',
+        color: '#FF9800', // Orange
         angle: 72
     },
     {
         id: 'contact',
         label: 'Contacts',
+        kanji: '結',
+        english: 'Connection',
         path: '/contact',
-        symbol: '♆',
-        inactiveColor: '#3F51B5',
-        hoverColor: '#03A9F4',
+        color: '#2196F3', // Blue
         angle: 144
     },
     {
         id: 'projects',
         label: 'Projects',
+        kanji: '業',
+        english: 'Work',
         path: '/projects',
-        symbol: '♄',
-        inactiveColor: '#E91E63',
-        hoverColor: '#CDDC39',
+        color: '#4CAF50', // Green
         angle: 216
     },
     {
         id: 'about',
         label: 'About',
+        kanji: '道',
+        english: 'The Way',
         path: '/about',
-        symbol: '♅',
-        inactiveColor: '#4CAF50',
-        hoverColor: '#CDDC39',
+        color: '#9C27B0', // Purple
         angle: 288
     }
 ]
@@ -62,12 +61,65 @@ export default function FourierNav() {
     const [showEye, setShowEye] = useState(true)
     const [eyeProgress, setEyeProgress] = useState(0)
     const [hoveredItem, setHoveredItem] = useState<string | null>(null)
-    const [rotation, setRotation] = useState(0)
-    const animationRef = useRef<number>(0)
 
+    // 3D Rotation State
+    const [rotation, setRotation] = useState(0)
+    const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
+    const [isDragging, setIsDragging] = useState(false)
+    const [dragStartY, setDragStartY] = useState(0)
+    const [dragStartRotation, setDragStartRotation] = useState(0)
+
+    // Mouse Tracking for Eye
+    useEffect(() => {
+        const handleMouseMove = (e: MouseEvent) => {
+            const x = (e.clientX - window.innerWidth / 2) / (window.innerWidth / 2)
+            const y = (e.clientY - window.innerHeight / 2) / (window.innerHeight / 2)
+            setMousePos({ x, y })
+        }
+        window.addEventListener('mousemove', handleMouseMove)
+        return () => window.removeEventListener('mousemove', handleMouseMove)
+    }, [])
+
+    // Scroll & Drag Interaction
+    useEffect(() => {
+        const handleWheel = (e: WheelEvent) => {
+            setRotation(prev => prev + e.deltaY * 0.05)
+        }
+
+        const handleMouseDown = (e: MouseEvent) => {
+            setIsDragging(true)
+            setDragStartY(e.clientY)
+            setDragStartRotation(rotation)
+        }
+
+        const handleMouseUp = () => {
+            setIsDragging(false)
+        }
+
+        const handleMouseMove = (e: MouseEvent) => {
+            if (isDragging) {
+                const deltaY = e.clientY - dragStartY
+                setRotation(dragStartRotation + deltaY * 0.5)
+            }
+        }
+
+        window.addEventListener('wheel', handleWheel)
+        window.addEventListener('mousedown', handleMouseDown)
+        window.addEventListener('mouseup', handleMouseUp)
+        window.addEventListener('mousemove', handleMouseMove)
+
+        return () => {
+            window.removeEventListener('wheel', handleWheel)
+            window.removeEventListener('mousedown', handleMouseDown)
+            window.removeEventListener('mouseup', handleMouseUp)
+            window.removeEventListener('mousemove', handleMouseMove)
+        }
+    }, [isDragging, dragStartY, dragStartRotation, rotation])
+
+    // Eye Intro Animation
     useEffect(() => {
         if (!showEye) return
-        const duration = 1125 // 75% of original 1500ms
+        const duration = 2000
         const startTime = Date.now()
         const animate = () => {
             const elapsed = Date.now() - startTime
@@ -77,27 +129,24 @@ export default function FourierNav() {
             if (progress < 1) {
                 requestAnimationFrame(animate)
             } else {
-                setTimeout(() => setShowEye(false), 300) // 50% slower fade
+                setTimeout(() => setShowEye(false), 500)
             }
         }
         animate()
     }, [showEye])
 
+    // Autonomous Rotation
     useEffect(() => {
-        if (hoveredItem) {
-            if (animationRef.current) cancelAnimationFrame(animationRef.current)
-            return
-        }
-        const animate = () => {
-            setRotation(prev => (prev + 0.05) % 360)
-            animationRef.current = requestAnimationFrame(animate)
-        }
-        animationRef.current = requestAnimationFrame(animate)
-        return () => {
-            if (animationRef.current) cancelAnimationFrame(animationRef.current)
-        }
-    }, [hoveredItem])
+        if (isDragging) return
 
+        const interval = setInterval(() => {
+            setRotation(prev => prev + 0.2) // Doubled speed
+        }, 50)
+
+        return () => clearInterval(interval)
+    }, [isDragging])
+
+    // Canvas Rendering (Background Particles)
     useEffect(() => {
         const canvas = canvasRef.current
         if (!canvas) return
@@ -105,8 +154,6 @@ export default function FourierNav() {
         if (!ctx) return
 
         let animationFrameId: number
-        let time = 0
-        const pathHistory: Array<{ x: number; y: number }> = []
 
         const resize = () => {
             canvas.width = window.innerWidth
@@ -115,207 +162,23 @@ export default function FourierNav() {
         window.addEventListener('resize', resize)
         resize()
 
-        const epicycles = Array.from({ length: 5 }, (_, i) => ({
-            radius: 25 / Math.pow(PHI, i * 0.4),
-            frequency: Math.pow(PHI, i * 0.3) * 0.15,
-            phase: (Math.PI * 2 * i) / 5
+        const particles = Array.from({ length: 30 }, () => ({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            size: Math.random() * 2,
+            alpha: Math.random() * 0.3
         }))
 
         const render = () => {
-            time += 0.002 // Slower wave movement
-            ctx.fillStyle = '#000000'
-            ctx.fillRect(0, 0, canvas.width, canvas.height)
+            ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-            const centerX = canvas.width / 2
-            const centerY = canvas.height / 2
-            const radius = 250
-
-            // Axes
-            ctx.globalAlpha = 0.1
-            ctx.strokeStyle = '#ffffff'
-            ctx.lineWidth = 1
-            ctx.beginPath()
-            ctx.moveTo(0, centerY)
-            ctx.lineTo(canvas.width, centerY)
-            ctx.moveTo(centerX, 0)
-            ctx.lineTo(centerX, canvas.height)
-            ctx.stroke()
-
-            // Fourier epicycles around each planet
-            NAV_ITEMS.forEach((item, planetIndex) => {
-                const planetAngle = ((item.angle + rotation) * Math.PI) / 180
-                const planetX = centerX + Math.cos(planetAngle) * radius
-                const planetY = centerY + Math.sin(planetAngle) * radius
-
-                let currentX = planetX
-                let currentY = planetY
-
-                epicycles.forEach((epicycle, i) => {
-                    const angle = time * epicycle.frequency + epicycle.phase + planetIndex * Math.PI / 3
-
-                    ctx.globalAlpha = 0.15
-                    ctx.strokeStyle = i % 2 === 0 ? item.inactiveColor : item.hoverColor
-                    ctx.lineWidth = 0.8
-
-                    ctx.beginPath()
-                    ctx.arc(currentX, currentY, epicycle.radius, 0, Math.PI * 2)
-                    ctx.stroke()
-
-                    const nextX = currentX + Math.cos(angle) * epicycle.radius
-                    const nextY = currentY + Math.sin(angle) * epicycle.radius
-
-                    ctx.beginPath()
-                    ctx.moveTo(currentX, currentY)
-                    ctx.lineTo(nextX, nextY)
-                    ctx.stroke()
-
-                    currentX = nextX
-                    currentY = nextY
-                })
-
-                // Traced point
-                ctx.globalAlpha = 0.7
+            particles.forEach(p => {
+                ctx.fillStyle = `rgba(255, 255, 255, ${p.alpha})`
                 ctx.beginPath()
-                ctx.arc(currentX, currentY, 2, 0, Math.PI * 2)
-                ctx.fillStyle = item.inactiveColor
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2)
                 ctx.fill()
             })
 
-            // Central epicycles
-            let currentX = centerX
-            let currentY = centerY
-
-            epicycles.forEach((epicycle, i) => {
-                const angle = time * epicycle.frequency * 0.5 + epicycle.phase
-
-                ctx.globalAlpha = 0.12
-                ctx.strokeStyle = i % 2 === 0 ? '#7E57C2' : '#4DD0E1'
-                ctx.lineWidth = 1
-
-                ctx.beginPath()
-                ctx.arc(currentX, currentY, epicycle.radius * 1.5, 0, Math.PI * 2)
-                ctx.stroke()
-
-                const nextX = currentX + Math.cos(angle) * epicycle.radius * 1.5
-                const nextY = currentY + Math.sin(angle) * epicycle.radius * 1.5
-
-                ctx.beginPath()
-                ctx.moveTo(currentX, currentY)
-                ctx.lineTo(nextX, nextY)
-                ctx.stroke()
-
-                currentX = nextX
-                currentY = nextY
-            })
-
-            pathHistory.push({ x: currentX, y: currentY })
-            if (pathHistory.length > 150) pathHistory.shift()
-
-            if (pathHistory.length > 1) {
-                ctx.globalAlpha = 0.25
-                ctx.strokeStyle = '#808080'
-                ctx.lineWidth = 1
-                ctx.beginPath()
-                for (let i = 0; i < pathHistory.length; i++) {
-                    const point = pathHistory[i]
-                    if (i === 0) ctx.moveTo(point.x, point.y)
-                    else ctx.lineTo(point.x, point.y)
-                }
-                ctx.stroke()
-            }
-
-            ctx.globalAlpha = 1
-            ctx.beginPath()
-            ctx.arc(currentX, currentY, 3, 0, Math.PI * 2)
-            const pointGradient = ctx.createRadialGradient(currentX, currentY, 0, currentX, currentY, 15)
-            pointGradient.addColorStop(0, '#ffffff')
-            pointGradient.addColorStop(0.5, '#E91E63')
-            pointGradient.addColorStop(1, 'transparent')
-            ctx.fillStyle = pointGradient
-            ctx.fill()
-
-            // Reactive wave at bottom
-            const waveY = canvas.height - 80
-            const waveAmplitudeMultiplier = hoveredItem ? 1.8 : 1
-            ctx.globalAlpha = 0.35
-            ctx.strokeStyle = hoveredItem
-                ? NAV_ITEMS.find(i => i.id === hoveredItem)?.hoverColor || '#4DD0E1'
-                : '#4DD0E1'
-            ctx.lineWidth = 1.5
-            ctx.beginPath()
-
-            for (let x = 0; x < canvas.width; x++) {
-                let y = waveY
-                for (let i = 1; i <= 5; i++) {
-                    const amplitude = (15 / Math.pow(PHI, i - 1)) * waveAmplitudeMultiplier
-                    const frequency = i * 0.01
-                    y += amplitude * Math.sin(frequency * x) // No time animation
-                }
-                if (x === 0) ctx.moveTo(x, y)
-                else ctx.lineTo(x, y)
-            }
-            ctx.stroke()
-
-            // Wave probability fill
-            ctx.globalAlpha = hoveredItem ? 0.3 : 0.15
-            ctx.fillStyle = hoveredItem
-                ? NAV_ITEMS.find(i => i.id === hoveredItem)?.hoverColor || '#4DD0E1'
-                : '#4DD0E1'
-            ctx.beginPath()
-            ctx.moveTo(0, waveY)
-            for (let x = 0; x < canvas.width; x++) {
-                let y = waveY
-                for (let i = 1; i <= 5; i++) {
-                    const amplitude = (15 / Math.pow(PHI, i - 1)) * waveAmplitudeMultiplier
-                    const frequency = i * 0.01
-                    y += amplitude * Math.sin(frequency * x) // No time animation
-                }
-                ctx.lineTo(x, y)
-            }
-            ctx.lineTo(canvas.width, waveY)
-            ctx.closePath()
-            ctx.fill()
-
-            // Planetary connections
-            ctx.globalAlpha = 0.2
-            NAV_ITEMS.forEach((item, i) => {
-                const nextItem = NAV_ITEMS[(i + 1) % NAV_ITEMS.length]
-                const angle1 = ((item.angle + rotation) * Math.PI) / 180
-                const angle2 = ((nextItem.angle + rotation) * Math.PI) / 180
-                const x1 = centerX + Math.cos(angle1) * radius
-                const y1 = centerY + Math.sin(angle1) * radius
-                const x2 = centerX + Math.cos(angle2) * radius
-                const y2 = centerY + Math.sin(angle2) * radius
-
-                ctx.strokeStyle = item.inactiveColor
-                ctx.lineWidth = 1
-                ctx.beginPath()
-
-                const steps = 50
-                for (let j = 0; j <= steps; j++) {
-                    const t = j / steps
-                    const baseX = x1 + (x2 - x1) * t
-                    const baseY = y1 + (y2 - y1) * t
-                    let offset = 0
-                    for (let n = 1; n <= 3; n++) {
-                        const amplitude = 12 / Math.pow(PHI, n)
-                        const frequency = n * 2
-                        offset += amplitude * Math.sin(frequency * t * Math.PI + time * n)
-                    }
-                    const dx = x2 - x1
-                    const dy = y2 - y1
-                    const length = Math.sqrt(dx * dx + dy * dy)
-                    const perpX = -dy / length
-                    const perpY = dx / length
-                    const finalX = baseX + perpX * offset
-                    const finalY = baseY + perpY * offset
-                    if (j === 0) ctx.moveTo(finalX, finalY)
-                    else ctx.lineTo(finalX, finalY)
-                }
-                ctx.stroke()
-            })
-
-            ctx.globalAlpha = 1
             animationFrameId = requestAnimationFrame(render)
         }
 
@@ -324,13 +187,25 @@ export default function FourierNav() {
             window.removeEventListener('resize', resize)
             cancelAnimationFrame(animationFrameId)
         }
-    }, [rotation, hoveredItem])
+    }, [])
 
     const handleClick = (path: string) => router.push(path)
 
-    const getCirclePosition = (angle: number, radius: number) => {
-        const rad = ((angle + rotation) * Math.PI) / 180
-        return { x: Math.cos(rad) * radius, y: Math.sin(rad) * radius }
+    // 3D Projection Helper
+    const get3DPosition = (angleDeg: number) => {
+        const angleRad = ((angleDeg + rotation) * Math.PI) / 180
+
+        const radiusY = 245 // 30% closer (350 * 0.7)
+        const radiusZ = 105 // 30% closer (150 * 0.7)
+
+        const y = Math.sin(angleRad) * radiusY
+        const z = Math.cos(angleRad) * radiusZ
+
+        const perspective = 1000
+        const scale = (perspective + z) / perspective
+        const opacity = Math.max(0.2, (z + radiusZ) / (2 * radiusZ))
+
+        return { x: 0, y, z, scale, opacity }
     }
 
     return (
@@ -340,114 +215,126 @@ export default function FourierNav() {
                     <motion.div
                         initial={{ opacity: 1 }}
                         exit={{ opacity: 0, filter: 'blur(20px)' }}
-                        transition={{ duration: 0.8, ease: "easeInOut" }}
+                        transition={{ duration: 0.8 }}
                         className="fixed inset-0 z-[200] flex items-center justify-center bg-black"
                     >
                         <div className="relative">
-                            {/* Glitch layers */}
-                            <motion.div
-                                animate={{
-                                    x: [0, -2, 2, -1, 1, 0],
-                                    y: [0, 1, -1, 2, -2, 0],
-                                    opacity: [0.5, 0.8, 0.5]
-                                }}
-                                transition={{
-                                    duration: 0.2,
-                                    repeat: Infinity,
-                                    repeatType: "mirror",
-                                    repeatDelay: Math.random() * 2
-                                }}
-                                className="absolute inset-0 mix-blend-screen"
-                            >
-                                <EyeSVG progress={eyeProgress} color="#ff0000" />
-                            </motion.div>
-                            <motion.div
-                                animate={{
-                                    x: [0, 2, -2, 1, -1, 0],
-                                    y: [0, -1, 1, -2, 2, 0],
-                                    opacity: [0.5, 0.8, 0.5]
-                                }}
-                                transition={{
-                                    duration: 0.2,
-                                    repeat: Infinity,
-                                    repeatType: "mirror",
-                                    repeatDelay: Math.random() * 2 + 0.1
-                                }}
-                                className="absolute inset-0 mix-blend-screen"
-                            >
-                                <EyeSVG progress={eyeProgress} color="#00ffff" />
-                            </motion.div>
-
-                            {/* Main Eye */}
-                            <div className="relative z-10">
-                                <EyeSVG progress={eyeProgress} color="#00BCD4" main />
-                            </div>
+                            <EyeSVG progress={eyeProgress} color="#00f7ff" main mousePos={mousePos} />
                         </div>
                     </motion.div>
                 )}
             </AnimatePresence>
 
-            <div className="relative w-full h-screen overflow-hidden bg-black flex items-center justify-center">
-                <canvas ref={canvasRef} className="absolute inset-0" />
+            <div className="relative w-full h-screen overflow-hidden bg-black flex items-center justify-center cursor-grab active:cursor-grabbing">
+                <canvas ref={canvasRef} className="absolute inset-0 z-0" />
 
-                <div className="relative z-10">
-                    <div
-                        className="w-40 h-40 rounded-full flex items-center justify-center transition-all duration-300 border-4"
-                        style={{
-                            borderColor: hoveredItem ? '#00BCD4' : '#2196F3',
-                            backgroundColor: 'transparent',
-                            boxShadow: hoveredItem ? '0 0 40px #00BCD4' : '0 0 20px #2196F3'
-                        }}
-                    >
-                        <span className="text-6xl transition-colors duration-300" style={{ color: hoveredItem ? '#00BCD4' : '#2196F3' }}>
-                            ☽
-                        </span>
-                    </div>
-
-                    {hoveredItem && (
-                        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="absolute top-full mt-4 left-1/2 -translate-x-1/2 whitespace-nowrap">
-                            <span className="text-white text-xl font-bold">
-                                {NAV_ITEMS.find(item => item.id === hoveredItem)?.label}
-                            </span>
-                        </motion.div>
-                    )}
+                {/* Central Moon / Eye Container */}
+                <div className="relative z-10 group pointer-events-none">
+                    <div className="absolute inset-0 bg-blue-500/10 blur-3xl rounded-full group-hover:bg-blue-400/20 transition-all duration-500" />
+                    <EyeSVG progress={1} color={showEye ? '#fff' : '#00f7ff'} main mousePos={mousePos} />
                 </div>
 
+                {/* 3D Orbiting Wireframe Moons */}
                 {NAV_ITEMS.map((item) => {
                     const isHovered = hoveredItem === item.id
-                    const position = getCirclePosition(item.angle, 250)
+                    const { x, y, z, scale, opacity } = get3DPosition(item.angle)
+                    const zIndex = z > 0 ? 20 : 5
 
                     return (
                         <motion.div
                             key={item.id}
-                            className="absolute cursor-pointer z-10"
+                            className="absolute cursor-pointer"
                             style={{
                                 left: '50%',
                                 top: '50%',
-                                transform: `translate(calc(-50% + ${position.x}px), calc(-50% + ${position.y}px))`
+                                transform: `translate(-50%, -50%) translate3d(${x}px, ${y}px, ${z}px) scale(${scale})`,
+                                zIndex: zIndex,
+                                opacity: opacity
                             }}
                             onMouseEnter={() => setHoveredItem(item.id)}
                             onMouseLeave={() => setHoveredItem(null)}
                             onClick={() => handleClick(item.path)}
                         >
+                            {/* Wireframe Moon Container */}
                             <div
-                                className="w-24 h-24 rounded-full flex items-center justify-center transition-all duration-300 border-4"
+                                className={`w-16 h-16 rounded-full flex flex-col items-center justify-center transition-all duration-300 relative
+                                    ${isHovered ? 'scale-[2]' : 'scale-100'}
+                                `}
                                 style={{
-                                    borderColor: isHovered ? item.hoverColor : item.inactiveColor,
-                                    backgroundColor: 'transparent',
-                                    boxShadow: isHovered ? `0 0 30px ${item.hoverColor}` : `0 0 15px ${item.inactiveColor}88`
+                                    background: 'transparent',
+                                    border: `1px solid ${isHovered ? item.color : 'rgba(255,255,255,0.3)'}`,
+                                    boxShadow: isHovered
+                                        ? `0 0 30px ${item.color}, inset 0 0 20px ${item.color}40`
+                                        : '0 0 10px rgba(255,255,255,0.2)'
                                 }}
                             >
-                                <span className="text-4xl transition-colors duration-300" style={{ color: isHovered ? item.hoverColor : item.inactiveColor }}>
-                                    {item.symbol}
-                                </span>
-                            </div>
+                                {/* Wireframe Grid Overlay */}
+                                <svg
+                                    className="absolute inset-0 w-full h-full pointer-events-none"
+                                    viewBox="0 0 100 100"
+                                    style={{ opacity: isHovered ? 0.8 : 0.4 }}
+                                >
+                                    {/* Latitude lines */}
+                                    {[20, 40, 60, 80].map(latY => (
+                                        <ellipse
+                                            key={`lat-${latY}`}
+                                            cx="50"
+                                            cy="50"
+                                            rx="48"
+                                            ry={48 * Math.cos((latY - 50) * Math.PI / 100)}
+                                            fill="none"
+                                            stroke={isHovered ? item.color : 'rgba(255,255,255,0.3)'}
+                                            strokeWidth="0.5"
+                                            transform={`translate(0, ${latY - 50})`}
+                                        />
+                                    ))}
 
-                            {isHovered && (
-                                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="absolute top-full mt-2 left-1/2 -translate-x-1/2 whitespace-nowrap">
-                                    <span className="text-white text-lg font-bold">{item.label}</span>
-                                </motion.div>
-                            )}
+                                    {/* Longitude lines */}
+                                    {[0, 30, 60, 90, 120, 150].map(angle => (
+                                        <ellipse
+                                            key={`lon-${angle}`}
+                                            cx="50"
+                                            cy="50"
+                                            rx={48 * Math.abs(Math.cos(angle * Math.PI / 180))}
+                                            ry="48"
+                                            fill="none"
+                                            stroke={isHovered ? item.color : 'rgba(255,255,255,0.3)'}
+                                            strokeWidth="0.5"
+                                        />
+                                    ))}
+
+                                    {/* Equator */}
+                                    <circle
+                                        cx="50"
+                                        cy="50"
+                                        r="48"
+                                        fill="none"
+                                        stroke={isHovered ? item.color : 'rgba(255,255,255,0.4)'}
+                                        strokeWidth="1"
+                                    />
+                                </svg>
+
+                                {/* Kanji Content */}
+                                <div className="flex flex-col items-center justify-center h-full relative z-10">
+                                    <span
+                                        className="text-2xl font-black leading-none transition-all duration-300"
+                                        style={{
+                                            color: isHovered ? item.color : '#f0f0f0',
+                                            textShadow: isHovered ? `0 0 20px ${item.color}, 0 0 40px ${item.color}` : '0 0 10px rgba(255,255,255,0.2)',
+                                            transform: isHovered ? 'scale(1.1)' : 'scale(1)'
+                                        }}
+                                    >
+                                        {item.kanji}
+                                    </span>
+
+                                    <span
+                                        className="text-[6px] uppercase tracking-widest font-bold transition-colors duration-300 mt-1 opacity-80"
+                                        style={{ color: isHovered ? item.color : '#f0f0f0' }}
+                                    >
+                                        {item.english}
+                                    </span>
+                                </div>
+                            </div>
                         </motion.div>
                     )
                 })}

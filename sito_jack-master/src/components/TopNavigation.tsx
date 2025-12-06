@@ -3,133 +3,102 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { motion, AnimatePresence } from 'framer-motion'
 
 export default function TopNavigation() {
-    const [searchQuery, setSearchQuery] = useState('')
-    const [showCategories, setShowCategories] = useState(false)
+    const [isOpen, setIsOpen] = useState(false)
     const router = useRouter()
 
-    const handleSearch = (e: React.FormEvent) => {
-        e.preventDefault()
-        if (searchQuery.trim()) {
-            router.push(`/products?search=${encodeURIComponent(searchQuery)}`)
-        }
-    }
+    const menuItems = [
+        { href: '/products', label: 'Shop', icon: '☿' },
+        { href: '/admin/products/new', label: 'Custom', icon: '♃' },
+        { href: '/experience', label: 'Experience', icon: '♆' },
+        { href: '/cart', label: 'Cart', icon: '♄' },
+    ]
 
     return (
-        <nav className="fixed top-0 left-0 right-0 z-50 bg-black/30 backdrop-blur-sm border-b border-white/5">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex items-center justify-between h-16">
-                    {/* Logo */}
-                    <Link href="/" className="flex items-center space-x-2 group">
-                        <span className="text-2xl">☽</span>
-                        <span className="text-xl font-bold bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">
-                            LUN/R
-                        </span>
-                    </Link>
+        <>
+            {/* Fixed Header with Logo and Hamburger */}
+            <nav className="fixed top-0 left-0 right-0 z-50 px-6 py-4 flex justify-between items-center pointer-events-none">
+                {/* Logo */}
+                <Link href="/" className="pointer-events-auto flex items-center space-x-2 group">
+                    <span className="text-2xl text-cyan-400">☽</span>
+                    <span className="text-xl font-bold bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">
+                        LUN/R
+                    </span>
+                </Link>
 
-                    {/* Search Bar */}
-                    <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-md mx-8">
-                        <div className="relative w-full">
-                            <input
-                                type="text"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                placeholder="Search products..."
-                                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-full text-white placeholder-gray-400 focus:outline-none focus:border-cyan-400 transition-colors"
-                            />
+                {/* Hamburger Button */}
+                <button
+                    onClick={() => setIsOpen(true)}
+                    className="pointer-events-auto p-2 text-white hover:text-cyan-400 transition-colors"
+                >
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <line x1="3" y1="12" x2="21" y2="12" />
+                        <line x1="3" y1="6" x2="21" y2="6" />
+                        <line x1="3" y1="18" x2="21" y2="18" />
+                    </svg>
+                </button>
+            </nav>
+
+            {/* Side Drawer */}
+            <AnimatePresence>
+                {isOpen && (
+                    <>
+                        {/* Backdrop */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setIsOpen(false)}
+                            className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm"
+                        />
+
+                        {/* Drawer */}
+                        <motion.div
+                            initial={{ x: '100%' }}
+                            animate={{ x: 0 }}
+                            exit={{ x: '100%' }}
+                            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                            className="fixed top-0 right-0 bottom-0 z-[70] w-80 bg-[#0a0e17] border-l border-white/10 p-8 flex flex-col"
+                        >
+                            {/* Close Button */}
                             <button
-                                type="submit"
-                                className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 text-cyan-400 hover:text-cyan-300 transition-colors"
+                                onClick={() => setIsOpen(false)}
+                                className="self-end mb-12 text-gray-400 hover:text-white"
                             >
-                                🔍
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <line x1="18" y1="6" x2="6" y2="18" />
+                                    <line x1="6" y1="6" x2="18" y2="18" />
+                                </svg>
                             </button>
-                        </div>
-                    </form>
 
-                    {/* Navigation Links */}
-                    <div className="flex items-center space-x-6">
-                        {/* Categories Dropdown */}
-                        <div className="relative">
-                            <button
-                                onClick={() => setShowCategories(!showCategories)}
-                                className="flex items-center space-x-1 text-gray-300 hover:text-white transition-colors"
-                            >
-                                <span className="text-lg">☿</span>
-                                <span className="hidden lg:inline">Shop</span>
-                            </button>
-                            {showCategories && (
-                                <div className="absolute top-full mt-2 right-0 w-48 bg-black/95 backdrop-blur-md border border-white/10 rounded-lg shadow-xl">
+                            {/* Menu Items */}
+                            <div className="flex flex-col space-y-8">
+                                {menuItems.map((item) => (
                                     <Link
-                                        href="/products"
-                                        className="block px-4 py-3 text-gray-300 hover:text-white hover:bg-white/5 transition-colors"
-                                        onClick={() => setShowCategories(false)}
+                                        key={item.href}
+                                        href={item.href}
+                                        onClick={() => setIsOpen(false)}
+                                        className="group flex items-center space-x-4 text-2xl font-light text-gray-300 hover:text-cyan-400 transition-colors"
                                     >
-                                        All Products
+                                        <span className="text-xl opacity-50 group-hover:opacity-100 transition-opacity">
+                                            {item.icon}
+                                        </span>
+                                        <span>{item.label}</span>
                                     </Link>
-                                    <Link
-                                        href="/products?category=3d-prints"
-                                        className="block px-4 py-3 text-gray-300 hover:text-white hover:bg-white/5 transition-colors"
-                                        onClick={() => setShowCategories(false)}
-                                    >
-                                        3D Prints
-                                    </Link>
-                                    <Link
-                                        href="/products?category=custom"
-                                        className="block px-4 py-3 text-gray-300 hover:text-white hover:bg-white/5 transition-colors"
-                                        onClick={() => setShowCategories(false)}
-                                    >
-                                        Custom Orders
-                                    </Link>
-                                </div>
-                            )}
-                        </div>
+                                ))}
+                            </div>
 
-                        {/* Custom Order */}
-                        <Link
-                            href="/admin/products/new"
-                            className="flex items-center space-x-1 text-gray-300 hover:text-white transition-colors"
-                        >
-                            <span className="text-lg">♃</span>
-                            <span className="hidden lg:inline">Custom</span>
-                        </Link>
-
-                        {/* Experience (Philosophical Nav) */}
-                        <Link
-                            href="/experience"
-                            className="flex items-center space-x-1 text-gray-300 hover:text-white transition-colors"
-                        >
-                            <span className="text-lg">♆</span>
-                            <span className="hidden lg:inline">Experience</span>
-                        </Link>
-
-                        {/* Cart */}
-                        <Link
-                            href="/cart"
-                            className="flex items-center space-x-1 text-gray-300 hover:text-white transition-colors relative"
-                        >
-                            <span className="text-lg">♄</span>
-                            <span className="hidden lg:inline">Cart</span>
-                            <span className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full text-xs flex items-center justify-center">
-                                0
-                            </span>
-                        </Link>
-                    </div>
-                </div>
-            </div>
-
-            {/* Mobile Search */}
-            <div className="md:hidden px-4 pb-3">
-                <form onSubmit={handleSearch}>
-                    <input
-                        type="text"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Search..."
-                        className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-full text-white placeholder-gray-400 focus:outline-none focus:border-cyan-400"
-                    />
-                </form>
-            </div>
-        </nav>
+                            {/* Footer Info */}
+                            <div className="mt-auto pt-8 border-t border-white/5 text-sm text-gray-500">
+                                <p>© 2024 LUN/R</p>
+                                <p className="mt-2">Neon Artisan Goods</p>
+                            </div>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
+        </>
     )
 }
