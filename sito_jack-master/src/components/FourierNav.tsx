@@ -5,55 +5,64 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { EyeSVG } from './EyeSVG'
 
+// Color Schemes (from standard Leibniz palette)
+const COLOR_SCHEMES = {
+    10: { inactive: '#b300ff', hover: '#ff00ff' }, // Purple/Magenta - Secret Club
+    12: { inactive: '#ff9000', hover: '#ffcc00' }, // Orange/Gold - Custom
+    14: { inactive: '#0080ff', hover: '#00f7ff' }, // Blue/Cyan - Shop Offline
+    15: { inactive: '#00f7ff', hover: '#00ff88' }, // Cyan/Lime - Shop Online
+    16: { inactive: '#4CAF50', hover: '#00ff00' }  // Green/Bright Green - Cart
+}
+
 const NAV_ITEMS = [
     {
-        id: 'shop',
-        label: 'Shop',
-        kanji: '蔵',
-        english: 'Storehouse',
+        id: 'shop-online',
+        label: 'Shop Online',
+        symbol: '☿', // Mercury
         path: '/products',
-        color: '#00f7ff', // Cyan - Innovation, Primary CTA
-        probability: 25, // Highest - main conversion action
+        colorScheme: 15,
+        probability: 25,
+        orbitalRadius: 300,
         angle: 0
     },
     {
         id: 'custom',
-        label: 'Custom Order',
-        kanji: '匠',
-        english: 'Artisan',
+        label: 'Custom',
+        symbol: '♃', // Jupiter
         path: '/admin/products/new',
-        color: '#ff9000', // Orange - Energy, Secondary action
+        colorScheme: 12,
         probability: 20,
+        orbitalRadius: 260,
         angle: 72
     },
     {
-        id: 'projects',
-        label: 'Projects',
-        kanji: '業',
-        english: 'Work',
-        path: '/projects',
-        color: '#4CAF50', // Green - Trust, Portfolio
+        id: 'shop-offline',
+        label: 'Shop Offline',
+        symbol: '♆', // Neptune
+        path: '/contact',
+        colorScheme: 14,
         probability: 15,
+        orbitalRadius: 220,
         angle: 144
     },
     {
-        id: 'contact',
-        label: 'Contacts',
-        kanji: '結',
-        english: 'Connection',
-        path: '/contact',
-        color: '#00ff88', // Lime - Support/Assistance
-        probability: 12,
+        id: 'cart',
+        label: 'Shopping Cart',
+        symbol: '♄', // Saturn
+        path: '/checkout',
+        colorScheme: 16,
+        probability: 18,
+        orbitalRadius: 280,
         angle: 216
     },
     {
-        id: 'about',
-        label: 'About',
-        kanji: '道',
-        english: 'The Way',
-        path: '/about',
-        color: '#b300ff', // Purple - Info/Exploration
-        probability: 8,
+        id: 'secret-club',
+        label: 'Secret Club',
+        symbol: '♅', // Uranus
+        path: '/experience',
+        colorScheme: 10,
+        probability: 12,
+        orbitalRadius: 240,
         angle: 288
     }
 ]
@@ -106,13 +115,17 @@ export default function FourierNav() {
         animate()
     }, [showEye])
 
+    // Autonomous Rotation - stops when hovering
     useEffect(() => {
+        if (hoveredItem) return // Stop rotation when hovering
+
         const interval = setInterval(() => {
             setRotation(prev => (prev + 0.15) % 360)
         }, 50)
         return () => clearInterval(interval)
-    }, [])
+    }, [hoveredItem])
 
+    // Canvas Rendering (Multiple orbital circles)
     useEffect(() => {
         const canvas = canvasRef.current
         if (!canvas) return
@@ -133,39 +146,33 @@ export default function FourierNav() {
 
             const centerX = canvas.width / 2
             const centerY = canvas.height / 2
-            const orbitalRadius = isMobile ? 195 : 300 // 35% smaller on mobile
 
-            ctx.strokeStyle = 'rgba(0, 247, 255, 0.15)'
-            ctx.lineWidth = 1
-            ctx.beginPath()
-            ctx.arc(centerX, centerY, orbitalRadius, 0, Math.PI * 2)
-            ctx.stroke()
+            // Draw orbital circles for each element
+            NAV_ITEMS.forEach(item => {
+                const radius = isMobile ? item.orbitalRadius * 0.65 : item.orbitalRadius
+                const colors = COLOR_SCHEMES[item.colorScheme as keyof typeof COLOR_SCHEMES]
 
+                ctx.strokeStyle = `${colors.inactive}40`
+                ctx.lineWidth = 1
+                ctx.beginPath()
+                ctx.arc(centerX, centerY, radius, 0, Math.PI * 2)
+                ctx.stroke()
+            })
+
+            // Connecting radial lines
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)'
             ctx.lineWidth = 0.5
             NAV_ITEMS.forEach(item => {
+                const radius = isMobile ? item.orbitalRadius * 0.65 : item.orbitalRadius
                 const angleRad = ((item.angle + rotation) * Math.PI) / 180
-                const x = centerX + Math.cos(angleRad) * orbitalRadius
-                const y = centerY + Math.sin(angleRad) * orbitalRadius
+                const x = centerX + Math.cos(angleRad) * radius
+                const y = centerY + Math.sin(angleRad) * radius
 
                 ctx.beginPath()
                 ctx.moveTo(centerX, centerY)
                 ctx.lineTo(x, y)
                 ctx.stroke()
             })
-
-            ctx.strokeStyle = 'rgba(0, 247, 255, 0.08)'
-            ctx.lineWidth = 1
-            ctx.beginPath()
-            NAV_ITEMS.forEach((item, i) => {
-                const angleRad = ((item.angle + rotation) * Math.PI) / 180
-                const x = centerX + Math.cos(angleRad) * orbitalRadius
-                const y = centerY + Math.sin(angleRad) * orbitalRadius
-                if (i === 0) ctx.moveTo(x, y)
-                else ctx.lineTo(x, y)
-            })
-            ctx.closePath()
-            ctx.stroke()
 
             animationFrameId = requestAnimationFrame(render)
         }
@@ -175,25 +182,25 @@ export default function FourierNav() {
             window.removeEventListener('resize', resize)
             cancelAnimationFrame(animationFrameId)
         }
-    }, [rotation])
+    }, [rotation, isMobile])
 
     const handleClick = (path: string) => {
         window.dispatchEvent(new Event('lunarInteraction'))
         router.push(path)
     }
 
-    const getCirclePosition = (angle: number) => {
+    const getCirclePosition = (angle: number, radius: number) => {
         const rad = ((angle + rotation) * Math.PI) / 180
-        const orbitalRadius = isMobile ? 195 : 300 // 35% smaller on mobile
+        const scaledRadius = isMobile ? radius * 0.65 : radius
         return {
-            x: Math.cos(rad) * orbitalRadius,
-            y: Math.sin(rad) * orbitalRadius
+            x: Math.cos(rad) * scaledRadius,
+            y: Math.sin(rad) * scaledRadius
         }
     }
 
     const getMoonSize = (probability: number) => {
         const baseSize = 40 + (probability * 2.4)
-        const scaleFactor = isMobile ? 0.65 : 1 // 35% smaller on mobile
+        const scaleFactor = isMobile ? 0.65 : 1
         return Math.round(baseSize * scaleFactor)
     }
 
@@ -217,16 +224,19 @@ export default function FourierNav() {
             <div className="relative w-full h-screen overflow-hidden bg-black flex items-center justify-center">
                 <canvas ref={canvasRef} className="absolute inset-0 z-0" />
 
+                {/* Central Eye - Leibniz Universal Monad */}
                 <div className="relative z-10 group pointer-events-none" style={{ width: isMobile ? '260px' : '400px', height: isMobile ? '260px' : '400px' }}>
                     <div className="absolute inset-0 bg-cyan-500/10 blur-3xl rounded-full group-hover:bg-cyan-400/20 transition-all duration-500" />
                     <EyeSVG progress={1} color={showEye ? '#fff' : '#00f7ff'} main mousePos={mousePos} />
                 </div>
 
+                {/* Aristotelian Elements - Planetary Symbols */}
                 {NAV_ITEMS.map((item) => {
                     const isHovered = hoveredItem === item.id
-                    const position = getCirclePosition(item.angle)
+                    const position = getCirclePosition(item.angle, item.orbitalRadius)
                     const size = getMoonSize(item.probability)
-                    const hoverSize = size * 1.5
+                    const hoverSize = size * 1.8
+                    const colors = COLOR_SCHEMES[item.colorScheme as keyof typeof COLOR_SCHEMES]
 
                     return (
                         <motion.div
@@ -244,7 +254,7 @@ export default function FourierNav() {
                             animate={{
                                 scale: isHovered ? hoverSize / size : 1
                             }}
-                            transition={{ duration: 0.3, ease: 'easeOut' }}
+                            transition={{ duration: 0.4, ease: 'easeOut' }}
                         >
                             <div
                                 className="rounded-full flex flex-col items-center justify-center relative"
@@ -252,12 +262,13 @@ export default function FourierNav() {
                                     width: `${size}px`,
                                     height: `${size}px`,
                                     background: 'transparent',
-                                    border: `2px solid ${isHovered ? item.color : 'rgba(255,255,255,0.4)'}`,
+                                    border: `2px solid ${isHovered ? colors.hover : colors.inactive}`,
                                     boxShadow: isHovered
-                                        ? `0 0 30px ${item.color}, inset 0 0 20px ${item.color}40`
-                                        : '0 0 10px rgba(255,255,255,0.2)'
+                                        ? `0 0 40px ${colors.hover}, inset 0 0 25px ${colors.hover}60`
+                                        : `0 0 15px ${colors.inactive}40`
                                 }}
                             >
+                                {/* Wireframe Grid */}
                                 <svg
                                     className="absolute inset-0 w-full h-full pointer-events-none"
                                     viewBox="0 0 100 100"
@@ -271,7 +282,7 @@ export default function FourierNav() {
                                             rx="47"
                                             ry={47 * Math.cos((y - 50) * Math.PI / 100)}
                                             fill="none"
-                                            stroke={isHovered ? item.color : 'rgba(255,255,255,0.4)'}
+                                            stroke={isHovered ? colors.hover : colors.inactive}
                                             strokeWidth="0.8"
                                             transform={`translate(0, ${y - 50})`}
                                         />
@@ -285,7 +296,7 @@ export default function FourierNav() {
                                             rx={47 * Math.abs(Math.cos(angle * Math.PI / 180))}
                                             ry="47"
                                             fill="none"
-                                            stroke={isHovered ? item.color : 'rgba(255,255,255,0.4)'}
+                                            stroke={isHovered ? colors.hover : colors.inactive}
                                             strokeWidth="0.8"
                                         />
                                     ))}
@@ -295,34 +306,45 @@ export default function FourierNav() {
                                         cy="50"
                                         r="47"
                                         fill="none"
-                                        stroke={isHovered ? item.color : 'rgba(255,255,255,0.5)'}
+                                        stroke={isHovered ? colors.hover : colors.inactive}
                                         strokeWidth="1.5"
                                     />
                                 </svg>
 
+                                {/* Planetary Symbol */}
                                 <div className="flex flex-col items-center justify-center h-full relative z-10">
                                     <span
                                         className="font-black leading-none"
                                         style={{
-                                            fontSize: `${Math.max(size * 0.4, 16)}px`,
-                                            color: isHovered ? item.color : 'rgba(255,255,255,0.8)',
-                                            textShadow: isHovered ? `0 0 15px ${item.color}` : 'none'
+                                            fontSize: `${Math.max(size * 0.5, 20)}px`,
+                                            color: isHovered ? colors.hover : colors.inactive,
+                                            textShadow: isHovered ? `0 0 20px ${colors.hover}` : 'none',
+                                            transition: 'all 0.3s ease'
                                         }}
                                     >
-                                        {item.kanji}
-                                    </span>
-
-                                    <span
-                                        className="uppercase tracking-wider font-bold mt-1 opacity-70"
-                                        style={{
-                                            fontSize: `${Math.max(size * 0.09, 7)}px`,
-                                            color: isHovered ? item.color : 'rgba(255,255,255,0.6)'
-                                        }}
-                                    >
-                                        {item.english}
+                                        {item.symbol}
                                     </span>
                                 </div>
                             </div>
+
+                            {/* Label (appears on hover) */}
+                            {isHovered && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: -10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="absolute top-full mt-2 left-1/2 transform -translate-x-1/2 whitespace-nowrap"
+                                >
+                                    <span
+                                        className="text-sm font-bold uppercase tracking-wider"
+                                        style={{
+                                            color: colors.hover,
+                                            textShadow: `0 0 10px ${colors.hover}`
+                                        }}
+                                    >
+                                        {item.label}
+                                    </span>
+                                </motion.div>
+                            )}
                         </motion.div>
                     )
                 })}
