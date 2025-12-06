@@ -66,6 +66,17 @@ export default function FourierNav() {
     const [hoveredItem, setHoveredItem] = useState<string | null>(null)
     const [rotation, setRotation] = useState(0)
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
+    const [isMobile, setIsMobile] = useState(false)
+
+    // Mobile detection
+    useEffect(() => {
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth < 768)
+        }
+        checkMobile()
+        window.addEventListener('resize', checkMobile)
+        return () => window.removeEventListener('resize', checkMobile)
+    }, [])
 
     useEffect(() => {
         const handleMouseMove = (e: MouseEvent) => {
@@ -122,7 +133,7 @@ export default function FourierNav() {
 
             const centerX = canvas.width / 2
             const centerY = canvas.height / 2
-            const orbitalRadius = 300
+            const orbitalRadius = isMobile ? 195 : 300 // 35% smaller on mobile
 
             ctx.strokeStyle = 'rgba(0, 247, 255, 0.15)'
             ctx.lineWidth = 1
@@ -173,7 +184,7 @@ export default function FourierNav() {
 
     const getCirclePosition = (angle: number) => {
         const rad = ((angle + rotation) * Math.PI) / 180
-        const orbitalRadius = 300
+        const orbitalRadius = isMobile ? 195 : 300 // 35% smaller on mobile
         return {
             x: Math.cos(rad) * orbitalRadius,
             y: Math.sin(rad) * orbitalRadius
@@ -182,7 +193,8 @@ export default function FourierNav() {
 
     const getMoonSize = (probability: number) => {
         const baseSize = 40 + (probability * 2.4)
-        return Math.round(baseSize)
+        const scaleFactor = isMobile ? 0.65 : 1 // 35% smaller on mobile
+        return Math.round(baseSize * scaleFactor)
     }
 
     return (
@@ -205,7 +217,7 @@ export default function FourierNav() {
             <div className="relative w-full h-screen overflow-hidden bg-black flex items-center justify-center">
                 <canvas ref={canvasRef} className="absolute inset-0 z-0" />
 
-                <div className="relative z-10 group pointer-events-none" style={{ width: '400px', height: '400px' }}>
+                <div className="relative z-10 group pointer-events-none" style={{ width: isMobile ? '260px' : '400px', height: isMobile ? '260px' : '400px' }}>
                     <div className="absolute inset-0 bg-cyan-500/10 blur-3xl rounded-full group-hover:bg-cyan-400/20 transition-all duration-500" />
                     <EyeSVG progress={1} color={showEye ? '#fff' : '#00f7ff'} main mousePos={mousePos} />
                 </div>
