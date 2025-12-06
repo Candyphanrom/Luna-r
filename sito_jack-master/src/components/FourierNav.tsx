@@ -21,8 +21,7 @@ const NAV_ITEMS = [
         symbol: '☿', // Mercury
         path: '/products',
         colorScheme: 15,
-        orbitalRadius: 180,
-        angle: 0
+        angle: -90 // Start at top
     },
     {
         id: 'custom',
@@ -30,8 +29,7 @@ const NAV_ITEMS = [
         symbol: '♃', // Jupiter
         path: '/admin/products/new',
         colorScheme: 12,
-        orbitalRadius: 180,
-        angle: 72
+        angle: -18 // 72° spacing
     },
     {
         id: 'shop-offline',
@@ -39,8 +37,7 @@ const NAV_ITEMS = [
         symbol: '♆', // Neptune
         path: '/contact',
         colorScheme: 14,
-        orbitalRadius: 180,
-        angle: 144
+        angle: 54
     },
     {
         id: 'cart',
@@ -48,8 +45,7 @@ const NAV_ITEMS = [
         symbol: '♄', // Saturn
         path: '/checkout',
         colorScheme: 16,
-        orbitalRadius: 180,
-        angle: 216
+        angle: 126
     },
     {
         id: 'secret-club',
@@ -57,8 +53,7 @@ const NAV_ITEMS = [
         symbol: '♅', // Uranus
         path: '/experience',
         colorScheme: 10,
-        orbitalRadius: 180,
-        angle: 288
+        angle: 198
     }
 ]
 
@@ -142,26 +137,25 @@ export default function FourierNav() {
             const centerX = canvas.width / 2
             const centerY = canvas.height / 2
 
-            // Draw orbital circles for each element
-            NAV_ITEMS.forEach(item => {
-                const radius = isMobile ? item.orbitalRadius * 0.65 : item.orbitalRadius
-                const colors = COLOR_SCHEMES[item.colorScheme as keyof typeof COLOR_SCHEMES]
+            // Calculate orbital radius (eye + planet size)
+            const eyeRadius = isMobile ? 130 : 200
+            const planetRadius = isMobile ? 25 : 35
+            const orbitalRadius = eyeRadius + planetRadius
 
-                ctx.strokeStyle = `${colors.inactive}40`
-                ctx.lineWidth = 1
-                ctx.beginPath()
-                ctx.arc(centerX, centerY, radius, 0, Math.PI * 2)
-                ctx.stroke()
-            })
+            // Draw single orbital circle
+            ctx.strokeStyle = 'rgba(0, 247, 255, 0.2)'
+            ctx.lineWidth = 1
+            ctx.beginPath()
+            ctx.arc(centerX, centerY, orbitalRadius, 0, Math.PI * 2)
+            ctx.stroke()
 
             // Connecting radial lines
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)'
             ctx.lineWidth = 0.5
             NAV_ITEMS.forEach(item => {
-                const radius = isMobile ? item.orbitalRadius * 0.65 : item.orbitalRadius
                 const angleRad = ((item.angle + rotation) * Math.PI) / 180
-                const x = centerX + Math.cos(angleRad) * radius
-                const y = centerY + Math.sin(angleRad) * radius
+                const x = centerX + Math.cos(angleRad) * orbitalRadius
+                const y = centerY + Math.sin(angleRad) * orbitalRadius
 
                 ctx.beginPath()
                 ctx.moveTo(centerX, centerY)
@@ -184,12 +178,19 @@ export default function FourierNav() {
         router.push(path)
     }
 
-    const getCirclePosition = (angle: number, radius: number) => {
+    const getCirclePosition = (angle: number) => {
         const rad = ((angle + rotation) * Math.PI) / 180
-        const scaledRadius = isMobile ? radius * 0.65 : radius
+
+        // Calculate radius so planets are tangent to eye's outer edge
+        // Eye radius: 200px (desktop) or 130px (mobile)
+        // Planet radius: 35px (desktop) or 25px (mobile)
+        const eyeRadius = isMobile ? 130 : 200
+        const planetRadius = isMobile ? 25 : 35
+        const orbitalRadius = eyeRadius + planetRadius
+
         return {
-            x: Math.cos(rad) * scaledRadius,
-            y: Math.sin(rad) * scaledRadius
+            x: Math.cos(rad) * orbitalRadius,
+            y: Math.sin(rad) * orbitalRadius
         }
     }
 
@@ -228,7 +229,7 @@ export default function FourierNav() {
                 {/* Aristotelian Elements - Planetary Symbols */}
                 {NAV_ITEMS.map((item) => {
                     const isHovered = hoveredItem === item.id
-                    const position = getCirclePosition(item.angle, item.orbitalRadius)
+                    const position = getCirclePosition(item.angle)
                     const size = getMoonSize()
                     const hoverSize = size * 1.8
                     const colors = COLOR_SCHEMES[item.colorScheme as keyof typeof COLOR_SCHEMES]
