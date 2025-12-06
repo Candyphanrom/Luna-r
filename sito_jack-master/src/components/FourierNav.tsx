@@ -166,7 +166,11 @@ export default function FourierNav() {
         }
     }, [rotation])
 
-    const handleClick = (path: string) => router.push(path)
+    const handleClick = (path: string) => {
+        // Trigger cryptic phrase on interaction
+        window.dispatchEvent(new Event('lunarInteraction'))
+        router.push(path)
+    }
 
     const getCirclePosition = (angle: number) => {
         const rad = ((angle + rotation) * Math.PI) / 180
@@ -219,11 +223,12 @@ export default function FourierNav() {
                     return (
                         <motion.div
                             key={item.id}
-                            className="absolute cursor-pointer z-10 pointer-events-auto"
+                            className="absolute cursor-pointer pointer-events-auto"
                             style={{
-                                left: '50%',
-                                top: '50%',
-                                transform: `translate(calc(-50% + ${position.x}px), calc(-50% + ${position.y}px))`
+                                left: `calc(50% + ${position.x}px)`,
+                                top: `calc(50% + ${position.y}px)`,
+                                transform: 'translate(-50%, -50%)',
+                                zIndex: 20
                             }}
                             onMouseEnter={() => setHoveredItem(item.id)}
                             onMouseLeave={() => setHoveredItem(null)}
@@ -255,11 +260,7 @@ export default function FourierNav() {
                                         color: item.color,
                                         boxShadow: `0 0 8px ${item.color}40`
                                     }}
-                                >
-                                    {item.probability}%
-                                </div>
-
-                                {/* Wireframe Grid */}
+                                    {/* Wireframe Grid */}
                                 <svg
                                     className="absolute inset-0 w-full h-full pointer-events-none"
                                     viewBox="0 0 100 100"

@@ -3,20 +3,18 @@ import { useState, useEffect } from 'react'
 
 const CRYPTIC_PHRASES = [
     "OBSERVING",
-    "THE OWLS ARE NOT WHAT THEY SEEM",
+    "THE FROGS ARE NOT WHAT THEY SEEM",
     "THROUGH THE DARKNESS OF FUTURE PAST",
     "IT IS HAPPENING AGAIN",
     "THE GLOW FADES SLOWLY",
-    "WHERE WE'RE FROM, THE BIRDS SING A PRETTY SONG",
+    "WHERE WE'RE FROM, THE FROGS SING A PRETTY SONG",
     "MEANWHILE",
     "BLUE ROSE",
     "I'LL SEE YOU IN 25 YEARS",
-    "COOPER... COOPER...",
-    "ELECTRICITY",
-    "THE MYSTERY OF LIFE ISN'T A PROBLEM TO SOLVE",
+    "POOPER... POOPER...",
+    "THE MYSTERY OF MOTHER ISN'T A PROBLEM TO SOLVE",
     "FALLING, FALLING",
     "GARMONBOZIA",
-    "LODGE CALLING"
 ]
 
 export const EyeSVG = ({
@@ -35,17 +33,42 @@ export const EyeSVG = ({
     const pupilY = 200 + (mousePos.y * maxOffset)
 
     const [phraseIndex, setPhraseIndex] = useState(0)
+    const [showPhrase, setShowPhrase] = useState(false)
 
-    // Cycle through phrases
+    // Sporadic phrase appearance - random longer intervals
     useEffect(() => {
         if (!main) return
 
-        const interval = setInterval(() => {
-            setPhraseIndex(prev => (prev + 1) % CRYPTIC_PHRASES.length)
-        }, 5000) // Change every 5 seconds
+        const scheduleNext = () => {
+            // Random delay between 20-40 seconds
+            const randomDelay = 20000 + Math.random() * 20000
 
-        return () => clearInterval(interval)
+            setTimeout(() => {
+                setShowPhrase(true)
+                setPhraseIndex(Math.floor(Math.random() * CRYPTIC_PHRASES.length))
+
+                // Hide after 4 seconds
+                setTimeout(() => {
+                    setShowPhrase(false)
+                    scheduleNext() // Schedule next appearance
+                }, 4000)
+            }, randomDelay)
+        }
+
+        scheduleNext()
     }, [main])
+
+    // Trigger on window interaction event
+    useEffect(() => {
+        const handleInteraction = () => {
+            setShowPhrase(true)
+            setPhraseIndex(Math.floor(Math.random() * CRYPTIC_PHRASES.length))
+            setTimeout(() => setShowPhrase(false), 4000)
+        }
+
+        window.addEventListener('lunarInteraction', handleInteraction)
+        return () => window.removeEventListener('lunarInteraction', handleInteraction)
+    }, [])
 
     return (
         <motion.svg
@@ -153,10 +176,10 @@ export const EyeSVG = ({
                 )}
             </motion.g>
 
-            {/* Cryptic Lynch-Inspired Text */}
-            {main && progress > 0.8 && (
+            {/* Cryptic Lynch-Inspired Text - Sporadic */}
+            {main && progress > 0.8 && showPhrase && (
                 <motion.text
-                    key={phraseIndex} // Re-trigger animation on phrase change
+                    key={phraseIndex}
                     x="200"
                     y="360"
                     textAnchor="middle"
@@ -164,8 +187,8 @@ export const EyeSVG = ({
                     fontSize="10"
                     fontFamily="monospace"
                     initial={{ opacity: 0 }}
-                    animate={{ opacity: [0, 0.8, 0.2, 0.8, 0] }}
-                    transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+                    animate={{ opacity: [0, 0.9, 0.5, 0.9, 0] }}
+                    transition={{ duration: 2, repeat: 1 }}
                 >
                     {CRYPTIC_PHRASES[phraseIndex]}
                 </motion.text>
